@@ -1,0 +1,35 @@
+package com.school.attendance.controller;
+
+import com.school.attendance.dto.AttendanceRequest;
+import com.school.attendance.dto.AttendanceResponse;
+import com.school.attendance.dto.UserDTO;
+import com.school.attendance.service.AttendanceService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/attendance")
+@CrossOrigin(origins = "*")
+public class AttendanceController {
+
+    @Autowired
+    private AttendanceService attendanceService;
+
+    @PostMapping
+    public ResponseEntity<AttendanceResponse> recordAttendance(@RequestBody AttendanceRequest request) {
+        return ResponseEntity.ok(attendanceService.recordAttendance(request.getUserId(), request.getType()));
+    }
+
+    @GetMapping("/present")
+    public ResponseEntity<List<UserDTO>> getPresentUsers() {
+        return ResponseEntity.ok(attendanceService.getPresentUsers());
+    }
+
+    @GetMapping("/history")
+    public ResponseEntity<List<AttendanceResponse>> getHistory() {
+        return ResponseEntity.ok(attendanceService.getAllRecords());
+    }
+}
