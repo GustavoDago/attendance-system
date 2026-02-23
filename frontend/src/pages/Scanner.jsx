@@ -77,16 +77,44 @@ const Scanner = () => {
                 });
 
                 const user = response.data.user;
+                const recordType = response.data.type;
+
+                let successMsg = `¡Bienvenido, ${user.firstName} ${user.lastName}!`;
+                let msgType = 'success';
+
+                if (recordType === 'LATE') {
+                    successMsg = `¡Ingreso registrado (TARDE), ${user.firstName}!`;
+                    msgType = 'warning';
+                } else if (recordType === 'EXIT') {
+                    successMsg = `¡Hasta luego, ${user.firstName} ${user.lastName}!`;
+                }
+
                 setMessage({
-                    type: 'success',
-                    text: `¡${type === 'ENTRY' ? 'Bienvenido' : 'Hasta luego'}, ${user.firstName} ${user.lastName}!`
+                    type: msgType,
+                    text: successMsg
                 });
             } catch (error) {
                 console.error(error);
-                setMessage({
-                    type: 'error',
-                    text: 'Error al registrar asistencia. Intente nuevamente.'
-                });
+                let errorMsg = 'Error al registrar asistencia. Intente nuevamente.';
+
+                // Parse Spring Boot error response if available
+                if (error.response && error.response.data) {
+                    if (typeof error.response.data === 'string') errorMsg = error.response.data;
+                    else if (error.response.data.message) errorMsg = error.response.data.message;
+                }
+
+                // If it's the 1-hour cooldown message from backend
+                if (errorMsg.includes('1 hora') || errorMsg.includes('misma acción')) {
+                    setMessage({
+                        type: 'warning',
+                        text: '⚠ Ya registró esta acción. Espere al menos 1 hora.'
+                    });
+                } else {
+                    setMessage({
+                        type: 'error',
+                        text: errorMsg
+                    });
+                }
             }
 
             // Redirect after 3 seconds
@@ -106,7 +134,8 @@ const Scanner = () => {
             {message && (
                 <div style={{
                     ...styles.message,
-                    backgroundColor: message.type === 'success' ? '#4CAF50' : '#f44336'
+                    backgroundColor: message.type === 'success' ? '#4CAF50' :
+                        message.type === 'warning' ? '#ff9800' : '#f44336'
                 }}>
                     {message.text}
                 </div>

@@ -32,4 +32,14 @@ public class AttendanceController {
     public ResponseEntity<List<AttendanceResponse>> getHistory() {
         return ResponseEntity.ok(attendanceService.getAllRecords());
     }
+
+    @GetMapping(value = "/export", produces = "text/csv; charset=UTF-8")
+    public ResponseEntity<byte[]> exportToCsv() {
+        String csv = attendanceService.exportToCsv();
+        byte[] csvBytes = csv.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=asistencia_" + java.time.LocalDate.now() + ".csv")
+                .body(csvBytes);
+    }
 }

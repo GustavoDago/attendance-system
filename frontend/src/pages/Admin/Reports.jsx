@@ -116,8 +116,13 @@ const Reports = () => {
                                     <tr key={item.id || index}>
                                         <td>{new Date(item.timestamp).toLocaleString()}</td>
                                         <td>{item.user.firstName} {item.user.lastName}</td>
-                                        <td style={{ color: item.type === 'ENTRY' ? 'green' : 'red' }}>
-                                            {item.type === 'ENTRY' ? 'INGRESO' : 'EGRESO'}
+                                        <td style={{
+                                            color: item.type === 'ENTRY' ? 'green' :
+                                                item.type === 'LATE' ? '#ff9800' : 'red',
+                                            fontWeight: 'bold'
+                                        }}>
+                                            {item.type === 'ENTRY' ? 'INGRESO' :
+                                                item.type === 'LATE' ? 'INGRESO (TARDE)' : 'EGRESO'}
                                         </td>
                                     </tr>
                                 );
