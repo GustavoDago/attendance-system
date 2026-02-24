@@ -105,7 +105,7 @@ public class AttendanceService {
     public List<UserDTO> getPresentUsers() {
         List<AttendanceRecord> latestRecords = attendanceRecordRepository.findLatestRecords();
         return latestRecords.stream()
-                .filter(record -> record.getType() == AttendanceType.ENTRY)
+                .filter(record -> record.getType() == AttendanceType.ENTRY || record.getType() == AttendanceType.LATE)
                 .map(record -> mapToUserDTO(record.getUser()))
                 .collect(Collectors.toList());
     }

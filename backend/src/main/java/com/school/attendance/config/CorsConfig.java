@@ -13,7 +13,8 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(@org.springframework.lang.NonNull CorsRegistry registry) {
                 registry.addMapping("/api/**")
-                        .allowedOrigins("http://localhost:5173", "http://127.0.0.1:5173")
+                        .allowedOrigins("http://localhost:5173", "http://127.0.0.1:5173",
+                                "https://snake-sought-badger.ngrok-free.app")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*");
             }

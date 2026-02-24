@@ -15,8 +15,8 @@ const Reports = () => {
         setLoading(true);
         try {
             const endpoint = tab === 'PRESENT'
-                ? 'http://localhost:8080/api/attendance/present'
-                : 'http://localhost:8080/api/attendance/history';
+                ? '/api/attendance/present'
+                : '/api/attendance/history';
 
             const response = await axios.get(endpoint);
             setData(response.data);

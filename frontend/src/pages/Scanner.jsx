@@ -71,7 +71,7 @@ const Scanner = () => {
         // Inner function to capture latest 'type'
         async function handleScan(userId) {
             try {
-                const response = await axios.post('http://localhost:8080/api/attendance', {
+                const response = await axios.post('/api/attendance', {
                     userId: userId,
                     type: type
                 });

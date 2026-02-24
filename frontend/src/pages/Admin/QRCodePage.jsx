@@ -8,7 +8,7 @@ const QRCodePage = () => {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
-        axios.get(`http://localhost:8080/api/users/${id}`)
+        axios.get(`/api/users/${id}`)
             .then(res => setUser(res.data))
             .catch(err => console.error(err));
     }, [id]);

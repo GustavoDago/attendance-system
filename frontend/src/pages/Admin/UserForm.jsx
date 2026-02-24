@@ -21,7 +21,7 @@ const UserForm = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            await axios.post('http://localhost:8080/api/users', formData);
+            await axios.post('/api/users', formData);
             toast.success('Usuario creado con éxito');
             navigate('/admin/users');
         } catch (error) {
