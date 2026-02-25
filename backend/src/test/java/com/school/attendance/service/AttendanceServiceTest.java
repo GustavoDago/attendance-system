@@ -1,7 +1,6 @@
 package com.school.attendance.service;
 
 import com.school.attendance.dto.AttendanceResponse;
-import com.school.attendance.dto.UserDTO;
 import com.school.attendance.model.AttendanceRecord;
 import com.school.attendance.model.AttendanceType;
 import com.school.attendance.model.Role;
@@ -58,9 +57,9 @@ class AttendanceServiceTest {
 
         when(attendanceRecordRepository.findLatestRecords()).thenReturn(Collections.singletonList(record));
 
-        List<UserDTO> presentUsers = attendanceService.getPresentUsers();
+        List<AttendanceResponse> presentUsers = attendanceService.getPresentUsers();
 
         assertEquals(1, presentUsers.size());
-        assertEquals("John", presentUsers.get(0).getFirstName());
+        assertEquals("John", presentUsers.get(0).getUser().getFirstName());
     }
 }

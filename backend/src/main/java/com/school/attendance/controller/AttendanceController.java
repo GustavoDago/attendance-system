@@ -2,7 +2,6 @@ package com.school.attendance.controller;
 
 import com.school.attendance.dto.AttendanceRequest;
 import com.school.attendance.dto.AttendanceResponse;
-import com.school.attendance.dto.UserDTO;
 import com.school.attendance.service.AttendanceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +23,7 @@ public class AttendanceController {
     }
 
     @GetMapping("/present")
-    public ResponseEntity<List<UserDTO>> getPresentUsers() {
+    public ResponseEntity<List<AttendanceResponse>> getPresentUsers() {
         return ResponseEntity.ok(attendanceService.getPresentUsers());
     }
 

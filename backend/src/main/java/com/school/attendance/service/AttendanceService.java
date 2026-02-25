@@ -102,11 +102,11 @@ public class AttendanceService {
         return csv.toString();
     }
 
-    public List<UserDTO> getPresentUsers() {
+    public List<AttendanceResponse> getPresentUsers() {
         List<AttendanceRecord> latestRecords = attendanceRecordRepository.findLatestRecords();
         return latestRecords.stream()
                 .filter(record -> record.getType() == AttendanceType.ENTRY || record.getType() == AttendanceType.LATE)
-                .map(record -> mapToUserDTO(record.getUser()))
+                .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 

@@ -33,16 +33,17 @@ const Reports = () => {
         let csvData = [];
         if (tab === 'PRESENT') {
             csvData = data.map(item => ({
-                Nombre: item.firstName,
-                Apellido: item.lastName,
-                Rol: item.role,
-                DNI: item.dni
+                "Hora de Ingreso": new Date(item.timestamp).toLocaleString(),
+                Nombre: item.user ? item.user.firstName : 'Usuario Desconocido',
+                Apellido: item.user ? item.user.lastName : '',
+                Rol: item.user ? item.user.role : '',
+                DNI: item.user ? item.user.dni : ''
             }));
         } else {
             csvData = data.map(item => ({
                 "Fecha/Hora": new Date(item.timestamp).toLocaleString(),
-                Nombre: `${item.user.firstName} ${item.user.lastName}`,
-                "Acción": item.type === 'ENTRY' ? 'INGRESO' : 'EGRESO'
+                Nombre: item.user ? `${item.user.firstName} ${item.user.lastName}` : 'Usuario Desconocido',
+                "Acción": item.type === 'ENTRY' ? 'INGRESO' : item.type === 'LATE' ? 'INGRESO (TARDE)' : 'EGRESO'
             }));
         }
 
@@ -85,6 +86,7 @@ const Reports = () => {
                     <thead>
                         {tab === 'PRESENT' ? (
                             <tr>
+                                <th>Fecha/Hora</th>
                                 <th>Nombre</th>
                                 <th>Apellido</th>
                                 <th>Rol</th>
@@ -101,13 +103,14 @@ const Reports = () => {
                     <tbody>
                         {data.map((item, index) => {
                             if (tab === 'PRESENT') {
-                                // item is UserDTO
+                                // item is AttendanceResponse
                                 return (
                                     <tr key={item.id || index}>
-                                        <td>{item.firstName}</td>
-                                        <td>{item.lastName}</td>
-                                        <td>{item.role}</td>
-                                        <td>{item.dni}</td>
+                                        <td>{new Date(item.timestamp).toLocaleString()}</td>
+                                        <td>{item.user ? item.user.firstName : 'Desconocido'}</td>
+                                        <td>{item.user ? item.user.lastName : ''}</td>
+                                        <td>{item.user ? item.user.role : ''}</td>
+                                        <td>{item.user ? item.user.dni : ''}</td>
                                     </tr>
                                 );
                             } else {
@@ -115,7 +118,7 @@ const Reports = () => {
                                 return (
                                     <tr key={item.id || index}>
                                         <td>{new Date(item.timestamp).toLocaleString()}</td>
-                                        <td>{item.user.firstName} {item.user.lastName}</td>
+                                        <td>{item.user ? `${item.user.firstName} ${item.user.lastName}` : 'Usuario Desconocido'}</td>
                                         <td style={{
                                             color: item.type === 'ENTRY' ? 'green' :
                                                 item.type === 'LATE' ? '#ff9800' : 'red',
