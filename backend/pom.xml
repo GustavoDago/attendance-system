@@ -97,4 +97,43 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>native</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <version>0.10.1</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <imageName>attendance-backend</imageName>
+                            <buildArgs>
+                                <!--
+                                    -march=compatibility: genera un binario compatible con CPUs antiguas
+                                    (sin instrucciones SSE4.2, como el Core 2 Duo del servidor real).
+                                    Necesario tanto para el servidor físico como para máxima portabilidad.
+                                -->
+                                <buildArg>-march=compatibility</buildArg>
+                                <!-- Aumentamos el límite de RAM a 5 GB para evitar OutOfMemory en WSL -->
+                                <buildArg>-J-Xmx5g</buildArg>
+                            </buildArgs>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>build-native</id>
+                                <goals>
+                                    <goal>compile-no-fork</goal>
+                                </goals>
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
 </project>

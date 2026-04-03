@@ -31,6 +31,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/attendance").permitAll() // Kiosk is public
                         .requestMatchers("/api/attendance/present").permitAll()
+                        .requestMatchers("/", "/index.html", "/assets/**", "/vite.svg", "/*.ico", "/*.png").permitAll()
+                        .requestMatchers("/admin/**", "/login").permitAll() // Let frontend handle routing for these before API checks
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
