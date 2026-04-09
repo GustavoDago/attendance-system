@@ -1,18 +1,24 @@
 package com.school.attendance.config;
 
-import com.school.attendance.model.Role;
-import com.school.attendance.model.User;
-import com.school.attendance.repository.UserRepository;
+import com.school.attendance.model.*;
+import com.school.attendance.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 @Component
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
 
     private final UserRepository userRepository;
+    private final CourseRepository courseRepository;
+    private final SubjectRepository subjectRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -20,7 +26,24 @@ public class DataSeeder implements CommandLineRunner {
         if (userRepository.count() == 0) {
             System.out.println("Starting mass data generation for testing...");
 
-            // 1. Principal
+            // 1. Create Subjects
+            List<Subject> subjects = new ArrayList<>();
+            String[] subjectNames = {"Matemática", "Lengua", "Historia", "Geografía", "Física", "Química", "Biología", "Educación Física"};
+            for (String name : subjectNames) {
+                subjects.add(subjectRepository.save(Subject.builder().name(name).build()));
+            }
+
+            // 2. Create Courses
+            List<Course> courses = new ArrayList<>();
+            String[] levels = {"1ro", "2do", "3ro", "4to", "5to"};
+            String[] divisions = {"A", "B"};
+            for (String level : levels) {
+                for (String div : divisions) {
+                    courses.add(courseRepository.save(Course.builder().name(level).division(div).build()));
+                }
+            }
+
+            // 3. Principal
             User admin = User.builder()
                     .firstName("Super")
                     .lastName("Admin")
@@ -30,57 +53,58 @@ public class DataSeeder implements CommandLineRunner {
                     .build();
             userRepository.save(admin);
 
-            // 2. 5 Profesores (5 Courses)
-            for (int i = 1; i <= 5; i++) {
-                User teacher = User.builder()
+            // 4. Teachers (one for each division, roughly)
+            Random random = new Random();
+            for (int i = 0; i < courses.size(); i++) {
+                List<Subject> teacherSubjects = new ArrayList<>();
+                teacherSubjects.add(subjects.get(random.nextInt(subjects.size())));
+                
+                Teacher teacher = Teacher.builder()
                         .firstName("Profesor")
-                        .lastName("Curso " + (char) ('A' + i - 1))
-                        .dni("prof" + i)
-                        .password(passwordEncoder.encode("prof" + i))
+                        .lastName(courses.get(i).getName() + " " + courses.get(i).getDivision())
+                        .dni("prof" + (i + 1))
+                        .password(passwordEncoder.encode("prof" + (i + 1)))
                         .role(Role.TEACHER)
+                        .specialty("Docente General")
+                        .subjects(teacherSubjects)
                         .build();
                 userRepository.save(teacher);
             }
 
-            // 3. 75 Alumnos (15 por cada uno de los 5 cursos)
+            // 5. Students (10 per course)
             int studentCounter = 1;
-            for (int course = 1; course <= 5; course++) {
-                for (int s = 1; s <= 15; s++) {
-                    User student = User.builder()
+            for (Course course : courses) {
+                for (int s = 1; s <= 10; s++) {
+                    Student student = Student.builder()
                             .firstName("Alumno " + s)
-                            .lastName("Curso " + (char) ('A' + course - 1))
+                            .lastName(course.getName() + " " + course.getDivision())
                             .dni("alum" + studentCounter)
                             .password(passwordEncoder.encode("alum" + studentCounter))
                             .role(Role.STUDENT)
+                            .course(course)
+                            .guardianName("Padre/Madre de Alumno " + s)
+                            .guardianPhone("555-" + String.format("%04d", studentCounter))
+                            .birthDate(LocalDate.now().minusYears(13 + random.nextInt(5)))
+                            .address("Calle Falsa 123, Ciudad")
                             .build();
                     userRepository.save(student);
                     studentCounter++;
                 }
             }
 
-            // 4. 10 Ayudantes (STAFF)
-            for (int i = 1; i <= 10; i++) {
-                User staff = User.builder()
-                        .firstName("Ayudante")
-                        .lastName("Staff " + i)
-                        .dni("ayu" + i)
-                        .password(passwordEncoder.encode("ayu" + i))
-                        .role(Role.STAFF)
-                        .build();
-                userRepository.save(staff);
-            }
+            // 6. Preceptors (one per 2 courses)
+            for (int i = 1; i <= 5; i++) {
+                List<Course> managedCourses = new ArrayList<>();
+                managedCourses.add(courses.get((i - 1) * 2));
+                managedCourses.add(courses.get((i - 1) * 2 + 1));
 
-            // 5. 3 Preceptoras (PRECEPTOR - Cargo de 2 cursos c/u aprox)
-            // Preceptor 1: Cursos A, B
-            // Preceptor 2: Cursos C, D
-            // Preceptor 3: Curso E
-            for (int i = 1; i <= 3; i++) {
-                User preceptor = User.builder()
-                        .firstName("Preceptora")
-                        .lastName(i == 1 ? "A-B" : i == 2 ? "C-D" : "E")
+                Preceptor preceptor = Preceptor.builder()
+                        .firstName("Preceptor")
+                        .lastName("Grupo " + i)
                         .dni("prec" + i)
                         .password(passwordEncoder.encode("prec" + i))
                         .role(Role.PRECEPTOR)
+                        .assignedCourses(managedCourses)
                         .build();
                 userRepository.save(preceptor);
             }

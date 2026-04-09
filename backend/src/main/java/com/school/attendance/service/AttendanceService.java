@@ -2,9 +2,7 @@ package com.school.attendance.service;
 
 import com.school.attendance.dto.AttendanceResponse;
 import com.school.attendance.dto.UserDTO;
-import com.school.attendance.model.AttendanceRecord;
-import com.school.attendance.model.AttendanceType;
-import com.school.attendance.model.User;
+import com.school.attendance.model.*;
 import com.school.attendance.repository.AttendanceRecordRepository;
 import com.school.attendance.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -120,12 +118,37 @@ public class AttendanceService {
     }
 
     private UserDTO mapToUserDTO(User user) {
-        return UserDTO.builder()
+        UserDTO.UserDTOBuilder builder = UserDTO.builder()
                 .id(user.getId())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .dni(user.getDni())
-                .role(user.getRole())
-                .build();
+                .role(user.getRole());
+
+        if (user instanceof Student student) {
+            builder.guardianName(student.getGuardianName())
+                    .guardianPhone(student.getGuardianPhone())
+                    .birthDate(student.getBirthDate())
+                    .address(student.getAddress());
+            if (student.getCourse() != null) {
+                builder.courseId(student.getCourse().getId())
+                        .courseName(student.getCourse().getName() + " " + student.getCourse().getDivision());
+            }
+        } else if (user instanceof Teacher teacher) {
+            builder.specialty(teacher.getSpecialty());
+            if (teacher.getSubjects() != null) {
+                builder.subjects(teacher.getSubjects().stream()
+                        .map(Subject::getName)
+                        .collect(Collectors.toList()));
+            }
+        } else if (user instanceof Preceptor preceptor) {
+            if (preceptor.getAssignedCourses() != null) {
+                builder.assignedCourses(preceptor.getAssignedCourses().stream()
+                        .map(c -> c.getName() + " " + c.getDivision())
+                        .collect(Collectors.toList()));
+            }
+        }
+
+        return builder.build();
     }
 }

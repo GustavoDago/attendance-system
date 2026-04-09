@@ -17,8 +17,10 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@lombok.experimental.SuperBuilder
 @Table(name = "users")
+@Inheritance(strategy = InheritanceType.JOINED)
+@DiscriminatorColumn(name = "user_type")
 public class User implements UserDetails {
 
     @Id
