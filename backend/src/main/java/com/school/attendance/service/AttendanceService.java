@@ -1,13 +1,17 @@
 package com.school.attendance.service;
 
 import com.school.attendance.dto.AttendanceResponse;
+import com.school.attendance.dto.DashboardStatsDTO;
 import com.school.attendance.dto.UserDTO;
 import com.school.attendance.model.*;
 import com.school.attendance.repository.AttendanceRecordRepository;
+import com.school.attendance.repository.CourseRepository;
+import com.school.attendance.repository.StudentRepository;
 import com.school.attendance.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Duration;
@@ -22,6 +26,12 @@ public class AttendanceService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private StudentRepository studentRepository;
+
+    @Autowired
+    private CourseRepository courseRepository;
 
     public AttendanceResponse recordAttendance(Long userId, AttendanceType type) {
         User user = userRepository.findById(userId)
@@ -106,6 +116,72 @@ public class AttendanceService {
                 .filter(record -> record.getType() == AttendanceType.ENTRY || record.getType() == AttendanceType.LATE)
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    public DashboardStatsDTO getDashboardStats(String userDni) {
+        User user = userRepository.findByDni(userDni)
+                .orElseThrow(() -> new RuntimeException("Logged in user not found"));
+
+        List<Course> targetCourses;
+        if (user.getRole() == Role.PRINCIPAL) {
+            targetCourses = courseRepository.findAll();
+        } else if (user instanceof Preceptor preceptor) {
+            targetCourses = preceptor.getAssignedCourses();
+        } else {
+            targetCourses = Collections.emptyList();
+        }
+
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        List<AttendanceRecord> todayRecords = attendanceRecordRepository.findByTimestampAfter(startOfDay);
+        
+        // Filter only Entry/Late records
+        Set<Long> presentUserIds = todayRecords.stream()
+                .filter(r -> r.getType() == AttendanceType.ENTRY || r.getType() == AttendanceType.LATE)
+                .map(r -> r.getUser().getId())
+                .collect(Collectors.toSet());
+
+        List<DashboardStatsDTO.CourseStatDTO> courseStatsList = new ArrayList<>();
+        List<UserDTO> allAbsentStudents = new ArrayList<>();
+        int totalStudents = 0;
+        int totalPresent = 0;
+
+        for (Course course : targetCourses) {
+            List<Student> courseStudents = studentRepository.findByCourse(course);
+            int courseTotal = courseStudents.size();
+            int coursePresent = 0;
+            
+            for (Student student : courseStudents) {
+                if (presentUserIds.contains(student.getId())) {
+                    coursePresent++;
+                } else {
+                    allAbsentStudents.add(mapToUserDTO(student));
+                }
+            }
+
+            int courseAbsent = courseTotal - coursePresent;
+            double percentage = courseTotal > 0 ? (double) coursePresent / courseTotal * 100 : 0;
+
+            courseStatsList.add(DashboardStatsDTO.CourseStatDTO.builder()
+                    .id(course.getId())
+                    .name(course.getName())
+                    .division(course.getDivision())
+                    .total(courseTotal)
+                    .present(coursePresent)
+                    .absent(courseAbsent)
+                    .percentage(percentage)
+                    .build());
+
+            totalStudents += courseTotal;
+            totalPresent += coursePresent;
+        }
+
+        return DashboardStatsDTO.builder()
+                .totalStudents(totalStudents)
+                .presentCount(totalPresent)
+                .absentCount(totalStudents - totalPresent)
+                .courseStats(courseStatsList)
+                .absentStudents(allAbsentStudents)
+                .build();
     }
 
     private AttendanceResponse mapToResponse(AttendanceRecord record) {

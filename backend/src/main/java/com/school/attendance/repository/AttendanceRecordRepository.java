@@ -20,4 +20,6 @@ public interface AttendanceRecordRepository extends JpaRepository<AttendanceReco
     // (e.g., start of day)
     Optional<AttendanceRecord> findTopByUserAndTimestampAfterOrderByTimestampDesc(User user,
             java.time.LocalDateTime startOfDay);
+
+    List<AttendanceRecord> findByTimestampAfter(java.time.LocalDateTime startOfDay);
 }

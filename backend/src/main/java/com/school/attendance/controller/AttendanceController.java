@@ -1,12 +1,12 @@
 package com.school.attendance.controller;
 
-import com.school.attendance.dto.AttendanceRequest;
-import com.school.attendance.dto.AttendanceResponse;
+import com.school.attendance.dto.*;
 import com.school.attendance.service.AttendanceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -40,5 +40,10 @@ public class AttendanceController {
                 .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
                         "attachment; filename=asistencia_" + java.time.LocalDate.now() + ".csv")
                 .body(csvBytes);
+    }
+
+    @GetMapping("/dashboard")
+    public ResponseEntity<DashboardStatsDTO> getDashboardStats(Principal principal) {
+        return ResponseEntity.ok(attendanceService.getDashboardStats(principal.getName()));
     }
 }

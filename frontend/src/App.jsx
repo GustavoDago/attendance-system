@@ -7,6 +7,7 @@ import UserForm from './pages/Admin/UserForm';
 import Reports from './pages/Admin/Reports';
 import QRCodePage from './pages/Admin/QRCodePage';
 import Login from './pages/Admin/Login';
+import Dashboard from './pages/Admin/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { ToastContainer } from 'react-toastify';
@@ -28,7 +29,7 @@ function App() {
           {/* Protected Admin Routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<UserList />} />
+              <Route index element={<Dashboard />} />
               <Route path="users" element={<UserList />} />
               <Route path="users/add" element={<UserForm />} />
               <Route path="reports" element={<Reports />} />
