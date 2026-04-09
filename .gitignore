@@ -1,0 +1,22 @@
+# Java/Spring
+/backend/target/
+*.class
+*.jar
+*.war
+*.ear
+*.db
+
+# Node.js/Frontend
+/frontend/node_modules/
+/frontend/dist/
+/frontend/build/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

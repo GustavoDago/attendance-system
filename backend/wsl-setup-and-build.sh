@@ -110,8 +110,11 @@ if [ $? -ne 0 ]; then
 fi
 echo "      Frontend compilado. ✓"
 
-# Copiar estáticos al lugar correcto para Spring Boot
+# Limpiar carpeta estática previa para evitar archivos obsoletos
+rm -rf "$BUILD_DIR/src/main/resources/static/"
 mkdir -p "$BUILD_DIR/src/main/resources/static"
+
+# Copiar estáticos al lugar correcto para Spring Boot
 cp -r dist/* "$BUILD_DIR/src/main/resources/static/"
 echo "      Recursos estáticos movidos a src/main/resources/static. ✓"
 echo ""

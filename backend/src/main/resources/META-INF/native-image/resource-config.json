@@ -1,0 +1,21 @@
+{
+  "resources": {
+    "includes": [
+      {
+        "pattern": "static/.*"
+      },
+      {
+        "pattern": "static/assets/.*"
+      },
+      {
+        "pattern": "static/index.html"
+      },
+      {
+        "pattern": "static/vite.svg"
+      },
+      {
+        "pattern": "static/favicon.ico"
+      }
+    ]
+  }
+}

@@ -453,3 +453,9 @@ Caused by: org.h2.mvstore.MVStoreException: The file is locked: G:/Mochila/Antig
 	at org.h2.mvstore.SingleFileStore.open(SingleFileStore.java:81)
 	at org.h2.mvstore.MVStore.<init>(MVStore.java:286)
 	... 153 more
+2026-04-02 16:01:23.319564Z jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "USERS" not found; SQL statement:
+alter table if exists attendance_records add constraint FK2yka8cp9l26e4kkyab5iyf3ef foreign key (user_id) references users [42102-224]
+2026-04-02 16:01:23.588241Z jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "USERS" not found; SQL statement:
+select count(*) from users u1_0 [42102-224]
