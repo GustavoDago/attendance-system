@@ -1,16 +1,21 @@
 package com.school.attendance.service;
 
 import com.school.attendance.dto.AttendanceResponse;
+import com.school.attendance.dto.UserDTO;
 import com.school.attendance.model.AttendanceRecord;
 import com.school.attendance.model.AttendanceType;
 import com.school.attendance.model.Role;
 import com.school.attendance.model.User;
 import com.school.attendance.repository.AttendanceRecordRepository;
 import com.school.attendance.repository.UserRepository;
+import com.school.attendance.repository.CourseRepository;
+import com.school.attendance.repository.StudentRepository;
+import com.school.attendance.mapper.UserMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
@@ -31,6 +36,15 @@ class AttendanceServiceTest {
     @Mock
     private AttendanceRecordRepository attendanceRecordRepository;
 
+    @Mock
+    private CourseRepository courseRepository;
+
+    @Mock
+    private StudentRepository studentRepository;
+
+    @Mock
+    private UserMapper userMapper;
+
     @InjectMocks
     private AttendanceService attendanceService;
 
@@ -41,6 +55,9 @@ class AttendanceServiceTest {
 
         AttendanceRecord record = new AttendanceRecord(1L, user, LocalDateTime.now(), AttendanceType.ENTRY);
         when(attendanceRecordRepository.save(any(AttendanceRecord.class))).thenReturn(record);
+
+        UserDTO userDTO = UserDTO.builder().firstName("John").lastName("Doe").dni("123456").role(Role.STUDENT).build();
+        when(userMapper.toDTO(user)).thenReturn(userDTO);
 
         AttendanceResponse response = attendanceService.recordAttendance(1L, AttendanceType.ENTRY);
 
@@ -56,6 +73,9 @@ class AttendanceServiceTest {
         AttendanceRecord record = new AttendanceRecord(1L, user, LocalDateTime.now(), AttendanceType.ENTRY);
 
         when(attendanceRecordRepository.findLatestRecords()).thenReturn(Collections.singletonList(record));
+
+        UserDTO userDTO = UserDTO.builder().firstName("John").lastName("Doe").dni("123456").role(Role.STUDENT).build();
+        when(userMapper.toDTO(user)).thenReturn(userDTO);
 
         List<AttendanceResponse> presentUsers = attendanceService.getPresentUsers();
 
