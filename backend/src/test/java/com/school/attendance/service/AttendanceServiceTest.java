@@ -1,11 +1,11 @@
 package com.school.attendance.service;
 
 import com.school.attendance.dto.AttendanceResponse;
-import com.school.attendance.model.AttendanceRecord;
-import com.school.attendance.model.AttendanceType;
-import com.school.attendance.model.Role;
-import com.school.attendance.model.User;
+import com.school.attendance.dto.StudentDTO;
+import com.school.attendance.mapper.UserMapper;
+import com.school.attendance.model.*;
 import com.school.attendance.repository.AttendanceRecordRepository;
+import com.school.attendance.repository.StudentRepository;
 import com.school.attendance.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,35 +31,47 @@ class AttendanceServiceTest {
     @Mock
     private AttendanceRecordRepository attendanceRecordRepository;
 
+    @Mock
+    private StudentRepository studentRepository;
+
+    @Mock
+    private UserMapper userMapper;
+
     @InjectMocks
     private AttendanceService attendanceService;
 
     @Test
     void recordAttendance_UserExists_RecordsAttendance() {
-        User user = new User(1L, "John", "Doe", "123456", "123456", Role.STUDENT);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        Student student = Student.builder().id(1L).firstName("John").lastName("Doe").dni("123456").build();
+        when(studentRepository.findById(1L)).thenReturn(Optional.of(student));
 
-        AttendanceRecord record = new AttendanceRecord(1L, user, LocalDateTime.now(), AttendanceType.ENTRY);
+        AttendanceRecord record = new AttendanceRecord(1L, student, LocalDateTime.now(), AttendanceType.ENTRY);
         when(attendanceRecordRepository.save(any(AttendanceRecord.class))).thenReturn(record);
+
+        StudentDTO studentDTO = StudentDTO.builder().id(1L).firstName("John").lastName("Doe").dni("123456").build();
+        when(userMapper.toStudentDTO(student)).thenReturn(studentDTO);
 
         AttendanceResponse response = attendanceService.recordAttendance(1L, AttendanceType.ENTRY);
 
         assertNotNull(response);
         assertEquals(1L, response.getId());
-        assertEquals("John", response.getUser().getFirstName());
+        assertEquals("John", response.getStudent().getFirstName());
         assertEquals(AttendanceType.ENTRY, response.getType());
     }
 
     @Test
     void getPresentUsers_ReturnsUsersWithEntryAsLatestRecord() {
-        User user = new User(1L, "John", "Doe", "123456", "123456", Role.STUDENT);
-        AttendanceRecord record = new AttendanceRecord(1L, user, LocalDateTime.now(), AttendanceType.ENTRY);
+        Student student = Student.builder().id(1L).firstName("John").lastName("Doe").dni("123456").build();
+        AttendanceRecord record = new AttendanceRecord(1L, student, LocalDateTime.now(), AttendanceType.ENTRY);
 
         when(attendanceRecordRepository.findLatestRecords()).thenReturn(Collections.singletonList(record));
+
+        StudentDTO studentDTO = StudentDTO.builder().id(1L).firstName("John").lastName("Doe").dni("123456").build();
+        when(userMapper.toStudentDTO(student)).thenReturn(studentDTO);
 
         List<AttendanceResponse> presentUsers = attendanceService.getPresentUsers();
 
         assertEquals(1, presentUsers.size());
-        assertEquals("John", presentUsers.get(0).getUser().getFirstName());
+        assertEquals("John", presentUsers.get(0).getStudent().getFirstName());
     }
 }

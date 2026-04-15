@@ -24,7 +24,9 @@ public class StudentDTO {
     private String studentFileId;
     private String guardianName;
     private String guardianPhone;
+    private Integer age;
     private Long courseId;
     private String courseName;
     private String courseShift;
+    private Integer orderNumber;
 }
