@@ -6,6 +6,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Data
 @NoArgsConstructor
@@ -24,6 +27,10 @@ public class Course {
 
     @Enumerated(EnumType.STRING)
     private Shift shift;       // Turno: MORNING, AFTERNOON, EVENING
+
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<StudentCourse> studentCourses = new ArrayList<>();
 
     /**
      * Returns the display label for the year (e.g., "1ro", "2do", "3ro").

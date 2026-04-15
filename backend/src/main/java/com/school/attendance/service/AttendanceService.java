@@ -3,6 +3,7 @@ package com.school.attendance.service;
 import com.school.attendance.dto.AttendanceResponse;
 import com.school.attendance.dto.DashboardStatsDTO;
 import com.school.attendance.dto.StudentDTO;
+import com.school.attendance.mapper.UserMapper;
 import com.school.attendance.model.*;
 import com.school.attendance.repository.AttendanceRecordRepository;
 import com.school.attendance.repository.CourseRepository;
@@ -32,6 +33,9 @@ public class AttendanceService {
 
     @Autowired
     private CourseRepository courseRepository;
+
+    @Autowired
+    private UserMapper userMapper;
 
     public AttendanceResponse recordAttendance(Long studentId, AttendanceType type) {
         Student student = studentRepository.findById(studentId)
@@ -101,8 +105,8 @@ public class AttendanceService {
             String firstName = r.getStudent().getFirstName().replace(",", " ");
             String lastName = r.getStudent().getLastName().replace(",", " ");
             String courseName = "";
-            if (r.getStudent().getCourse() != null) {
-                Course c = r.getStudent().getCourse();
+            if (!r.getStudent().getStudentCourses().isEmpty()) {
+                Course c = r.getStudent().getStudentCourses().get(0).getCourse();
                 courseName = c.getYearLabel() + " " + c.getDivision();
             }
             String actionType = r.getType().toString();
@@ -158,7 +162,7 @@ public class AttendanceService {
                 if (presentStudentIds.contains(student.getId())) {
                     coursePresent++;
                 } else {
-                    allAbsentStudents.add(mapToStudentDTO(student));
+                    allAbsentStudents.add(userMapper.toStudentDTO(student));
                 }
             }
 
@@ -194,36 +198,9 @@ public class AttendanceService {
     private AttendanceResponse mapToResponse(AttendanceRecord record) {
         return AttendanceResponse.builder()
                 .id(record.getId())
-                .student(mapToStudentDTO(record.getStudent()))
+                .student(userMapper.toStudentDTO(record.getStudent()))
                 .timestamp(record.getTimestamp())
                 .type(record.getType())
                 .build();
-    }
-
-    private StudentDTO mapToStudentDTO(Student student) {
-        StudentDTO.StudentDTOBuilder builder = StudentDTO.builder()
-                .id(student.getId())
-                .firstName(student.getFirstName())
-                .lastName(student.getLastName())
-                .dni(student.getDni())
-                .birthDate(student.getBirthDate())
-                .address(student.getAddress())
-                .city(student.getCity())
-                .nationality(student.getNationality())
-                .birthPlace(student.getBirthPlace())
-                .studentFileId(student.getStudentFileId())
-                .guardianName(student.getGuardianName())
-                .guardianPhone(student.getGuardianPhone());
-
-        if (student.getCourse() != null) {
-            Course course = student.getCourse();
-            builder.courseId(course.getId())
-                    .courseName(course.getYearLabel() + " " + course.getDivision());
-            if (course.getShift() != null) {
-                builder.courseShift(course.getShift().name());
-            }
-        }
-
-        return builder.build();
     }
 }

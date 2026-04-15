@@ -7,6 +7,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.Period;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Data
@@ -35,7 +38,13 @@ public class Student {
     private String guardianName;
     private String guardianPhone;
 
-    @ManyToOne
-    @JoinColumn(name = "course_id")
-    private Course course;
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<StudentCourse> studentCourses = new ArrayList<>();
+
+    @Transient
+    public Integer getAge() {
+        if (birthDate == null) return null;
+        return Period.between(birthDate, LocalDate.now()).getYears();
+    }
 }

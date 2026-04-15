@@ -2,12 +2,12 @@ package com.school.attendance.service;
 
 import com.school.attendance.model.*;
 import com.school.attendance.dto.UserDTO;
+import com.school.attendance.mapper.UserMapper;
 import com.school.attendance.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import lombok.RequiredArgsConstructor;
 
@@ -17,6 +17,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
 
     public UserDTO createUser(UserDTO userDTO) {
         if (userRepository.findByDni(userDTO.getDni()).isPresent()) {
@@ -33,42 +34,16 @@ public class UserService {
                 .role(userDTO.getRole())
                 .build();
         user = userRepository.save(user);
-        return mapToDTO(user);
+        return userMapper.toUserDTO(user);
     }
 
     public List<UserDTO> getAllUsers() {
         return userRepository.findAll().stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .map(userMapper::toUserDTO)
+                .toList();
     }
 
     public Optional<UserDTO> getUserById(Long id) {
-        return userRepository.findById(id).map(this::mapToDTO);
-    }
-
-    private UserDTO mapToDTO(User user) {
-        UserDTO.UserDTOBuilder builder = UserDTO.builder()
-                .id(user.getId())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .dni(user.getDni())
-                .role(user.getRole());
-
-        if (user instanceof Teacher teacher) {
-            builder.specialty(teacher.getSpecialty());
-            if (teacher.getSubjects() != null) {
-                builder.subjects(teacher.getSubjects().stream()
-                        .map(Subject::getName)
-                        .collect(Collectors.toList()));
-            }
-        } else if (user instanceof Preceptor preceptor) {
-            if (preceptor.getAssignedCourses() != null) {
-                builder.assignedCourses(preceptor.getAssignedCourses().stream()
-                        .map(c -> c.getYearLabel() + " " + c.getDivision())
-                        .collect(Collectors.toList()));
-            }
-        }
-
-        return builder.build();
+        return userRepository.findById(id).map(userMapper::toUserDTO);
     }
 }
