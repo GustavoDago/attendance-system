@@ -2,7 +2,7 @@ package com.school.attendance.service;
 
 import com.school.attendance.dto.AttendanceResponse;
 import com.school.attendance.dto.DashboardStatsDTO;
-import com.school.attendance.dto.UserDTO;
+import com.school.attendance.dto.StudentDTO;
 import com.school.attendance.model.*;
 import com.school.attendance.repository.AttendanceRecordRepository;
 import com.school.attendance.repository.CourseRepository;
@@ -33,15 +33,15 @@ public class AttendanceService {
     @Autowired
     private CourseRepository courseRepository;
 
-    public AttendanceResponse recordAttendance(Long userId, AttendanceType type) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public AttendanceResponse recordAttendance(Long studentId, AttendanceType type) {
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startOfDay = now.toLocalDate().atStartOfDay();
 
         Optional<AttendanceRecord> lastRecordOpt = attendanceRecordRepository
-                .findTopByUserAndTimestampAfterOrderByTimestampDesc(user, startOfDay);
+                .findTopByStudentAndTimestampAfterOrderByTimestampDesc(student, startOfDay);
 
         if (lastRecordOpt.isPresent()) {
             AttendanceRecord lastRecord = lastRecordOpt.get();
@@ -68,7 +68,7 @@ public class AttendanceService {
         }
 
         AttendanceRecord record = AttendanceRecord.builder()
-                .user(user)
+                .student(student)
                 .type(finalType)
                 .timestamp(now)
                 .build();
@@ -92,19 +92,23 @@ public class AttendanceService {
 
         StringBuilder csv = new StringBuilder();
         csv.append('\uFEFF'); // UTF-8 BOM so Excel opens it with right encoding
-        csv.append("Fecha,Hora,DNI,Nombre,Apellido,Rol,Tipo\n");
+        csv.append("Fecha,Hora,DNI,Nombre,Apellido,Curso,Tipo\n");
 
         for (AttendanceRecord r : records) {
             String date = r.getTimestamp().toLocalDate().toString();
             String time = r.getTimestamp().toLocalTime().withNano(0).toString();
-            String dni = r.getUser().getDni();
-            String firstName = r.getUser().getFirstName().replace(",", " ");
-            String lastName = r.getUser().getLastName().replace(",", " ");
-            String role = r.getUser().getRole() != null ? r.getUser().getRole().name() : "";
+            String dni = r.getStudent().getDni();
+            String firstName = r.getStudent().getFirstName().replace(",", " ");
+            String lastName = r.getStudent().getLastName().replace(",", " ");
+            String courseName = "";
+            if (r.getStudent().getCourse() != null) {
+                Course c = r.getStudent().getCourse();
+                courseName = c.getYearLabel() + " " + c.getDivision();
+            }
             String actionType = r.getType().toString();
 
             csv.append(String.format("%s,%s,%s,%s,%s,%s,%s\n",
-                    date, time, dni, firstName, lastName, role, actionType));
+                    date, time, dni, firstName, lastName, courseName, actionType));
         }
 
         return csv.toString();
@@ -135,13 +139,13 @@ public class AttendanceService {
         List<AttendanceRecord> todayRecords = attendanceRecordRepository.findByTimestampAfter(startOfDay);
         
         // Filter only Entry/Late records
-        Set<Long> presentUserIds = todayRecords.stream()
+        Set<Long> presentStudentIds = todayRecords.stream()
                 .filter(r -> r.getType() == AttendanceType.ENTRY || r.getType() == AttendanceType.LATE)
-                .map(r -> r.getUser().getId())
+                .map(r -> r.getStudent().getId())
                 .collect(Collectors.toSet());
 
         List<DashboardStatsDTO.CourseStatDTO> courseStatsList = new ArrayList<>();
-        List<UserDTO> allAbsentStudents = new ArrayList<>();
+        List<StudentDTO> allAbsentStudents = new ArrayList<>();
         int totalStudents = 0;
         int totalPresent = 0;
 
@@ -151,20 +155,23 @@ public class AttendanceService {
             int coursePresent = 0;
             
             for (Student student : courseStudents) {
-                if (presentUserIds.contains(student.getId())) {
+                if (presentStudentIds.contains(student.getId())) {
                     coursePresent++;
                 } else {
-                    allAbsentStudents.add(mapToUserDTO(student));
+                    allAbsentStudents.add(mapToStudentDTO(student));
                 }
             }
 
             int courseAbsent = courseTotal - coursePresent;
             double percentage = courseTotal > 0 ? (double) coursePresent / courseTotal * 100 : 0;
 
+            String shiftLabel = course.getShift() != null ? course.getShift().name() : "";
+
             courseStatsList.add(DashboardStatsDTO.CourseStatDTO.builder()
                     .id(course.getId())
-                    .name(course.getName())
+                    .name(course.getYearLabel())
                     .division(course.getDivision())
+                    .shift(shiftLabel)
                     .total(courseTotal)
                     .present(coursePresent)
                     .absent(courseAbsent)
@@ -187,41 +194,33 @@ public class AttendanceService {
     private AttendanceResponse mapToResponse(AttendanceRecord record) {
         return AttendanceResponse.builder()
                 .id(record.getId())
-                .user(mapToUserDTO(record.getUser()))
+                .student(mapToStudentDTO(record.getStudent()))
                 .timestamp(record.getTimestamp())
                 .type(record.getType())
                 .build();
     }
 
-    private UserDTO mapToUserDTO(User user) {
-        UserDTO.UserDTOBuilder builder = UserDTO.builder()
-                .id(user.getId())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .dni(user.getDni())
-                .role(user.getRole());
+    private StudentDTO mapToStudentDTO(Student student) {
+        StudentDTO.StudentDTOBuilder builder = StudentDTO.builder()
+                .id(student.getId())
+                .firstName(student.getFirstName())
+                .lastName(student.getLastName())
+                .dni(student.getDni())
+                .birthDate(student.getBirthDate())
+                .address(student.getAddress())
+                .city(student.getCity())
+                .nationality(student.getNationality())
+                .birthPlace(student.getBirthPlace())
+                .studentFileId(student.getStudentFileId())
+                .guardianName(student.getGuardianName())
+                .guardianPhone(student.getGuardianPhone());
 
-        if (user instanceof Student student) {
-            builder.guardianName(student.getGuardianName())
-                    .guardianPhone(student.getGuardianPhone())
-                    .birthDate(student.getBirthDate())
-                    .address(student.getAddress());
-            if (student.getCourse() != null) {
-                builder.courseId(student.getCourse().getId())
-                        .courseName(student.getCourse().getName() + " " + student.getCourse().getDivision());
-            }
-        } else if (user instanceof Teacher teacher) {
-            builder.specialty(teacher.getSpecialty());
-            if (teacher.getSubjects() != null) {
-                builder.subjects(teacher.getSubjects().stream()
-                        .map(Subject::getName)
-                        .collect(Collectors.toList()));
-            }
-        } else if (user instanceof Preceptor preceptor) {
-            if (preceptor.getAssignedCourses() != null) {
-                builder.assignedCourses(preceptor.getAssignedCourses().stream()
-                        .map(c -> c.getName() + " " + c.getDivision())
-                        .collect(Collectors.toList()));
+        if (student.getCourse() != null) {
+            Course course = student.getCourse();
+            builder.courseId(course.getId())
+                    .courseName(course.getYearLabel() + " " + course.getDivision());
+            if (course.getShift() != null) {
+                builder.courseShift(course.getShift().name());
             }
         }
 

@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Builder
 public class AttendanceResponse {
     private Long id;
-    private UserDTO user;
+    private StudentDTO student;
     private LocalDateTime timestamp;
     private AttendanceType type;
 }

@@ -1,28 +1,39 @@
 package com.school.attendance.model;
 
 import jakarta.persistence.*;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "students")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
-@SuperBuilder
-@EqualsAndHashCode(callSuper = true)
-@DiscriminatorValue("STUDENT")
-public class Student extends User {
+@AllArgsConstructor
+@Builder
+@Table(name = "students")
+public class Student {
 
-    private String guardianName;
-    private String guardianPhone;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String firstName;
+    private String lastName;
+
+    @Column(unique = true)
+    private String dni;
+
     private LocalDate birthDate;
     private String address;
+    private String city;           // Localidad (ej: "Ramallo")
+    private String nationality;    // Nacionalidad (ej: "Argentina")
+    private String birthPlace;     // Lugar de Nacimiento (ej: "San Nicolás")
+    private String studentFileId;  // Legajo (ej: "2/26")
+    private String guardianName;
+    private String guardianPhone;
 
     @ManyToOne
     @JoinColumn(name = "course_id")

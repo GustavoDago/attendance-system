@@ -54,16 +54,7 @@ public class UserService {
                 .dni(user.getDni())
                 .role(user.getRole());
 
-        if (user instanceof Student student) {
-            builder.guardianName(student.getGuardianName())
-                    .guardianPhone(student.getGuardianPhone())
-                    .birthDate(student.getBirthDate())
-                    .address(student.getAddress());
-            if (student.getCourse() != null) {
-                builder.courseId(student.getCourse().getId())
-                        .courseName(student.getCourse().getName() + " " + student.getCourse().getDivision());
-            }
-        } else if (user instanceof Teacher teacher) {
+        if (user instanceof Teacher teacher) {
             builder.specialty(teacher.getSpecialty());
             if (teacher.getSubjects() != null) {
                 builder.subjects(teacher.getSubjects().stream()
@@ -73,7 +64,7 @@ public class UserService {
         } else if (user instanceof Preceptor preceptor) {
             if (preceptor.getAssignedCourses() != null) {
                 builder.assignedCourses(preceptor.getAssignedCourses().stream()
-                        .map(c -> c.getName() + " " + c.getDivision())
+                        .map(c -> c.getYearLabel() + " " + c.getDivision())
                         .collect(Collectors.toList()));
             }
         }

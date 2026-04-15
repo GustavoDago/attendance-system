@@ -2,12 +2,12 @@ package com.school.attendance.config;
 
 import com.school.attendance.model.*;
 import com.school.attendance.repository.*;
+import com.school.attendance.service.CsvImportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -20,11 +20,12 @@ public class DataSeeder implements CommandLineRunner {
     private final CourseRepository courseRepository;
     private final SubjectRepository subjectRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CsvImportService csvImportService;
 
     @Override
     public void run(String... args) throws Exception {
         if (userRepository.count() == 0) {
-            System.out.println("Starting mass data generation for testing...");
+            System.out.println("Starting data generation...");
 
             // 1. Create Subjects
             List<Subject> subjects = new ArrayList<>();
@@ -33,13 +34,22 @@ public class DataSeeder implements CommandLineRunner {
                 subjects.add(subjectRepository.save(Subject.builder().name(name).build()));
             }
 
-            // 2. Create Courses
+            // 2. Create Courses (if not already created by CSV import)
+            // The CSV import will create courses automatically, but we ensure
+            // all expected courses exist for teachers and preceptors
             List<Course> courses = new ArrayList<>();
-            String[] levels = {"1ro", "2do", "3ro", "4to", "5to"};
+            int[] years = {1, 2, 3, 4, 5};
             String[] divisions = {"A", "B"};
-            for (String level : levels) {
+            for (int year : years) {
                 for (String div : divisions) {
-                    courses.add(courseRepository.save(Course.builder().name(level).division(div).build()));
+                    Course course = courseRepository.findByYearAndDivisionAndShift(year, div, Shift.MORNING)
+                            .orElseGet(() -> courseRepository.save(
+                                    Course.builder()
+                                            .year(year)
+                                            .division(div)
+                                            .shift(Shift.MORNING)
+                                            .build()));
+                    courses.add(course);
                 }
             }
 
@@ -61,7 +71,7 @@ public class DataSeeder implements CommandLineRunner {
                 
                 Teacher teacher = Teacher.builder()
                         .firstName("Profesor")
-                        .lastName(courses.get(i).getName() + " " + courses.get(i).getDivision())
+                        .lastName(courses.get(i).getYearLabel() + " " + courses.get(i).getDivision())
                         .dni("prof" + (i + 1))
                         .password(passwordEncoder.encode("prof" + (i + 1)))
                         .role(Role.TEACHER)
@@ -71,26 +81,8 @@ public class DataSeeder implements CommandLineRunner {
                 userRepository.save(teacher);
             }
 
-            // 5. Students (10 per course)
-            int studentCounter = 1;
-            for (Course course : courses) {
-                for (int s = 1; s <= 10; s++) {
-                    Student student = Student.builder()
-                            .firstName("Alumno " + s)
-                            .lastName(course.getName() + " " + course.getDivision())
-                            .dni("alum" + studentCounter)
-                            .password(passwordEncoder.encode("alum" + studentCounter))
-                            .role(Role.STUDENT)
-                            .course(course)
-                            .guardianName("Padre/Madre de Alumno " + s)
-                            .guardianPhone("555-" + String.format("%04d", studentCounter))
-                            .birthDate(LocalDate.now().minusYears(13 + random.nextInt(5)))
-                            .address("Calle Falsa 123, Ciudad")
-                            .build();
-                    userRepository.save(student);
-                    studentCounter++;
-                }
-            }
+            // 5. Import students from CSV
+            csvImportService.importStudentsFromCsv();
 
             // 6. Preceptors (one per 2 courses)
             for (int i = 1; i <= 5; i++) {
@@ -109,7 +101,7 @@ public class DataSeeder implements CommandLineRunner {
                 userRepository.save(preceptor);
             }
 
-            System.out.println("Test data successfully created. Total Users: " + userRepository.count());
+            System.out.println("Data setup complete. Users: " + userRepository.count());
         }
     }
 }

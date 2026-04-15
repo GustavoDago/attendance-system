@@ -15,7 +15,7 @@ public class DashboardStatsDTO {
     private int presentCount;
     private int absentCount;
     private List<CourseStatDTO> courseStats;
-    private List<UserDTO> absentStudents;
+    private List<StudentDTO> absentStudents;
 
     @Data
     @NoArgsConstructor
@@ -25,6 +25,7 @@ public class DashboardStatsDTO {
         private Long id;
         private String name;
         private String division;
+        private String shift;
         private int total;
         private int present;
         private int absent;

@@ -5,6 +5,6 @@ import lombok.Data;
 
 @Data
 public class AttendanceRequest {
-    private Long userId;
+    private Long studentId;
     private AttendanceType type;
 }
