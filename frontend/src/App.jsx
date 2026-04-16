@@ -4,6 +4,8 @@ import Scanner from './pages/Scanner';
 import AdminLayout from './pages/Admin/AdminLayout';
 import UserList from './pages/Admin/UserList';
 import UserForm from './pages/Admin/UserForm';
+import StudentList from './pages/Admin/StudentList';
+import StudentForm from './pages/Admin/StudentForm';
 import Reports from './pages/Admin/Reports';
 import QRCodePage from './pages/Admin/QRCodePage';
 import Login from './pages/Admin/Login';
@@ -32,6 +34,9 @@ function App() {
               <Route index element={<Dashboard />} />
               <Route path="users" element={<UserList />} />
               <Route path="users/add" element={<UserForm />} />
+              <Route path="students" element={<StudentList />} />
+              <Route path="students/add" element={<StudentForm />} />
+              <Route path="students/edit/:id" element={<StudentForm />} />
               <Route path="reports" element={<Reports />} />
             </Route>
             {/* Print QR Route */}

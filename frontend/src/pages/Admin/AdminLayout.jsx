@@ -8,6 +8,7 @@ const AdminLayout = () => {
                 <h2>Admin Panel</h2>
                 <ul style={styles.nav}>
                     <li><Link to="/admin" style={styles.link}>Dashboard</Link></li>
+                    <li><Link to="/admin/students" style={styles.link}>Alumnos</Link></li>
                     <li><Link to="/admin/users" style={styles.link}>Usuarios</Link></li>
                     <li><Link to="/admin/reports" style={styles.link}>Reportes</Link></li>
                     <li><Link to="/" style={styles.link}>Modo Kiosco</Link></li>
