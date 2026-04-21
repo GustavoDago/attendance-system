@@ -72,16 +72,20 @@ const Dashboard = () => {
                             <table style={styles.table}>
                                 <thead>
                                     <tr>
+                                        <th>N°</th>
                                         <th>Alumno</th>
                                         <th>Curso</th>
+                                        <th>Grupo</th>
                                         <th>DNI</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {stats.absentStudents.map(student => (
                                         <tr key={student.id}>
+                                            <td>{student.orderNumber}</td>
                                             <td>{student.firstName} {student.lastName}</td>
                                             <td>{student.courseName}</td>
+                                            <td>{student.groupNumber}</td>
                                             <td>{student.dni}</td>
                                         </tr>
                                     ))}

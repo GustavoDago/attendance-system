@@ -2,7 +2,7 @@ package com.school.attendance.config;
 
 import com.school.attendance.model.*;
 import com.school.attendance.repository.*;
-import com.school.attendance.service.CsvImportService;
+import com.school.attendance.service.ExcelImportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,7 +20,7 @@ public class DataSeeder implements CommandLineRunner {
     private final CourseRepository courseRepository;
     private final SubjectRepository subjectRepository;
     private final PasswordEncoder passwordEncoder;
-    private final CsvImportService csvImportService;
+    private final ExcelImportService excelImportService;
 
     @Override
     public void run(String... args) throws Exception {
@@ -81,8 +81,8 @@ public class DataSeeder implements CommandLineRunner {
                 userRepository.save(teacher);
             }
 
-            // 5. Import students from CSV
-            csvImportService.importStudentsFromCsv();
+            // 5. Import students from Excel
+            excelImportService.importStudentsFromExcel();
 
             // 6. Preceptors (one per 2 courses)
             for (int i = 1; i <= 5; i++) {

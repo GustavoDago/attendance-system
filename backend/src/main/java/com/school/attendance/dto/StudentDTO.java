@@ -29,4 +29,5 @@ public class StudentDTO {
     private String courseName;
     private String courseShift;
     private Integer orderNumber;
+    private Integer groupNumber;
 }
