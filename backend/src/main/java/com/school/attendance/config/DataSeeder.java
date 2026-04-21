@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -19,6 +20,7 @@ public class DataSeeder implements CommandLineRunner {
     private final UserRepository userRepository;
     private final CourseRepository courseRepository;
     private final SubjectRepository subjectRepository;
+    private final StudentCourseRepository studentCourseRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -81,13 +83,22 @@ public class DataSeeder implements CommandLineRunner {
                             .dni("alum" + studentCounter)
                             .password(passwordEncoder.encode("alum" + studentCounter))
                             .role(Role.STUDENT)
-                            .course(course)
-                            .guardianName("Padre/Madre de Alumno " + s)
-                            .guardianPhone("555-" + String.format("%04d", studentCounter))
+                            .nationality("Argentina")
+                            .birthPlace("Buenos Aires")
                             .birthDate(LocalDate.now().minusYears(13 + random.nextInt(5)))
-                            .address("Calle Falsa 123, Ciudad")
+                            .address("Calle Falsa 123")
+                            .locality("Localidad X")
+                            .phone("1122334455")
+                            .fileNumber("LEG-" + studentCounter)
                             .build();
-                    userRepository.save(student);
+                    student = userRepository.save(student);
+
+                    studentCourseRepository.save(StudentCourse.builder()
+                            .student(student)
+                            .course(course)
+                            .orderNumber(s)
+                            .build());
+
                     studentCounter++;
                 }
             }

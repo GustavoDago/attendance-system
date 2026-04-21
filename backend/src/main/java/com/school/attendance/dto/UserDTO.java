@@ -21,12 +21,18 @@ public class UserDTO {
     private Role role;
 
     // Student fields
-    private String guardianName;
-    private String guardianPhone;
+    private Integer age;
+    private String nationality;
+    private String birthPlace;
     private LocalDate birthDate;
     private String address;
-    private Long courseId;
-    private String courseName;
+    private String locality;
+    private String phone;
+    private String fileNumber;
+
+    private List<Long> courseIds;
+    private List<String> courseNames;
+    private List<Integer> orderNumbers; // Corresponding to courseIds
 
     // Teacher fields
     private String specialty;

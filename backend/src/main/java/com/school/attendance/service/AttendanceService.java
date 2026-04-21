@@ -8,6 +8,7 @@ import com.school.attendance.repository.AttendanceRecordRepository;
 import com.school.attendance.repository.CourseRepository;
 import com.school.attendance.repository.StudentRepository;
 import com.school.attendance.repository.UserRepository;
+import com.school.attendance.mapper.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +33,9 @@ public class AttendanceService {
 
     @Autowired
     private CourseRepository courseRepository;
+
+    @Autowired
+    private UserMapper userMapper;
 
     public AttendanceResponse recordAttendance(Long userId, AttendanceType type) {
         User user = userRepository.findById(userId)
@@ -154,7 +158,7 @@ public class AttendanceService {
                 if (presentUserIds.contains(student.getId())) {
                     coursePresent++;
                 } else {
-                    allAbsentStudents.add(mapToUserDTO(student));
+                    allAbsentStudents.add(userMapper.toDTO(student));
                 }
             }
 
@@ -187,44 +191,9 @@ public class AttendanceService {
     private AttendanceResponse mapToResponse(AttendanceRecord record) {
         return AttendanceResponse.builder()
                 .id(record.getId())
-                .user(mapToUserDTO(record.getUser()))
+                .user(userMapper.toDTO(record.getUser()))
                 .timestamp(record.getTimestamp())
                 .type(record.getType())
                 .build();
-    }
-
-    private UserDTO mapToUserDTO(User user) {
-        UserDTO.UserDTOBuilder builder = UserDTO.builder()
-                .id(user.getId())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .dni(user.getDni())
-                .role(user.getRole());
-
-        if (user instanceof Student student) {
-            builder.guardianName(student.getGuardianName())
-                    .guardianPhone(student.getGuardianPhone())
-                    .birthDate(student.getBirthDate())
-                    .address(student.getAddress());
-            if (student.getCourse() != null) {
-                builder.courseId(student.getCourse().getId())
-                        .courseName(student.getCourse().getName() + " " + student.getCourse().getDivision());
-            }
-        } else if (user instanceof Teacher teacher) {
-            builder.specialty(teacher.getSpecialty());
-            if (teacher.getSubjects() != null) {
-                builder.subjects(teacher.getSubjects().stream()
-                        .map(Subject::getName)
-                        .collect(Collectors.toList()));
-            }
-        } else if (user instanceof Preceptor preceptor) {
-            if (preceptor.getAssignedCourses() != null) {
-                builder.assignedCourses(preceptor.getAssignedCourses().stream()
-                        .map(c -> c.getName() + " " + c.getDivision())
-                        .collect(Collectors.toList()));
-            }
-        }
-
-        return builder.build();
     }
 }
