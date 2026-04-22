@@ -62,7 +62,8 @@ public class UserMapper {
             StudentCourse sc = student.getStudentCourses().get(0);
             builder.courseId(sc.getCourse().getId())
                     .courseName(sc.getCourse().getYearLabel() + " " + sc.getCourse().getDivision())
-                    .orderNumber(sc.getOrderNumber());
+                    .orderNumber(sc.getOrderNumber())
+                    .groupNumber(sc.getGroupNumber());
             if (sc.getCourse().getShift() != null) {
                 builder.courseShift(sc.getCourse().getShift().name());
             }

@@ -34,10 +34,13 @@ const Reports = () => {
         if (tab === 'PRESENT') {
             csvData = data.map(item => ({
                 "Hora de Ingreso": new Date(item.timestamp).toLocaleString(),
-                Nombre: item.user ? item.user.firstName : 'Usuario Desconocido',
-                Apellido: item.user ? item.user.lastName : '',
-                Rol: item.user ? item.user.role : '',
-                DNI: item.user ? item.user.dni : ''
+                "N° Orden": item.student ? item.student.orderNumber : '',
+                Nombre: item.student ? item.student.firstName : 'Desconocido',
+                Apellido: item.student ? item.student.lastName : '',
+                Rol: item.student ? (item.student.role || 'ALUMNO') : '',
+                Curso: item.student ? item.student.courseName : '',
+                Grupo: item.student ? item.student.groupNumber : '',
+                DNI: item.student ? item.student.dni : ''
             }));
         } else {
             csvData = data.map(item => ({
@@ -87,9 +90,12 @@ const Reports = () => {
                         {tab === 'PRESENT' ? (
                             <tr>
                                 <th>Fecha/Hora</th>
+                                <th>N°</th>
                                 <th>Nombre</th>
                                 <th>Apellido</th>
                                 <th>Rol</th>
+                                <th>Curso</th>
+                                <th>Grupo</th>
                                 <th>DNI</th>
                             </tr>
                         ) : (
@@ -107,10 +113,13 @@ const Reports = () => {
                                 return (
                                     <tr key={item.id || index}>
                                         <td>{new Date(item.timestamp).toLocaleString()}</td>
-                                        <td>{item.user ? item.user.firstName : 'Desconocido'}</td>
-                                        <td>{item.user ? item.user.lastName : ''}</td>
-                                        <td>{item.user ? item.user.role : ''}</td>
-                                        <td>{item.user ? item.user.dni : ''}</td>
+                                        <td>{item.student ? item.student.orderNumber : ''}</td>
+                                        <td>{item.student ? item.student.firstName : 'Desconocido'}</td>
+                                        <td>{item.student ? item.student.lastName : ''}</td>
+                                        <td>{item.student ? (item.student.role || 'ALUMNO') : ''}</td>
+                                        <td>{item.student ? item.student.courseName : ''}</td>
+                                        <td>{item.student ? item.student.groupNumber : ''}</td>
+                                        <td>{item.student ? item.student.dni : ''}</td>
                                     </tr>
                                 );
                             } else {
