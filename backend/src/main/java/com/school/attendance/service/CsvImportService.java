@@ -1,9 +1,8 @@
 package com.school.attendance.service;
 
-import com.school.attendance.model.Course;
-import com.school.attendance.model.Shift;
-import com.school.attendance.model.Student;
+import com.school.attendance.model.*;
 import com.school.attendance.repository.CourseRepository;
+import com.school.attendance.repository.StudentCourseRepository;
 import com.school.attendance.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ClassPathResource;
@@ -23,6 +22,7 @@ public class CsvImportService {
 
     private final StudentRepository studentRepository;
     private final CourseRepository courseRepository;
+    private final StudentCourseRepository studentCourseRepository;
 
     /**
      * Imports students from the CSV file located in the classpath (data/alumnos.csv).
@@ -133,10 +133,26 @@ public class CsvImportService {
                 .city(city)
                 .guardianPhone(phone)
                 .studentFileId(studentFileId)
-                .course(course)
                 .build();
 
-        return studentRepository.save(student);
+        student = studentRepository.save(student);
+
+        if (course != null) {
+            Integer nextOrder = studentCourseRepository.findMaxOrderNumberByCourseId(course.getId())
+                    .map(max -> max + 1)
+                    .orElse(1);
+
+            StudentCourse sc = StudentCourse.builder()
+                    .id(new StudentCourseId(student.getId(), course.getId()))
+                    .student(student)
+                    .course(course)
+                    .orderNumber(nextOrder)
+                    .build();
+            studentCourseRepository.save(sc);
+            student.getStudentCourses().add(sc);
+        }
+
+        return student;
     }
 
     private Course findOrCreateCourse(Integer year, String division, Shift shift) {
