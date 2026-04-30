@@ -8,7 +8,7 @@ const QRCodePage = () => {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
-        axios.get(`/api/users/${id}`)
+        axios.get(`/api/students/${id}`)
             .then(res => setUser(res.data))
             .catch(err => console.error(err));
     }, [id]);
@@ -33,8 +33,8 @@ const QRCodePage = () => {
                     <div style={styles.info}>
                         <h1 style={styles.name}>{user.firstName} {user.lastName}</h1>
                         <p style={styles.dni}>DNI: {user.dni}</p>
-                        <div style={{ ...styles.roleLabel, backgroundColor: getRoleColor(user.role) }}>
-                            {translateRole(user.role)}
+                        <div style={{ ...styles.roleLabel, backgroundColor: '#2196F3' }}>
+                            ESTUDIANTE
                         </div>
                     </div>
                 </div>
@@ -42,9 +42,9 @@ const QRCodePage = () => {
                 {/* Footer with QR */}
                 <div style={styles.footer}>
                     <div style={styles.qrWrapper}>
-                        <QRCode value={user.id.toString()} size={140} level="H" />
+                        <QRCode value={user.qrToken} size={140} level="H" />
                     </div>
-                    <p style={styles.idText}>ID interno: {user.id}</p>
+                    <p style={styles.idText}>TOKEN: {user.qrToken.substring(0, 8)}...</p>
                 </div>
             </div>
 

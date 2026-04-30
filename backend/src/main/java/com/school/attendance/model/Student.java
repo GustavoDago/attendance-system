@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Data
@@ -41,6 +42,16 @@ public class Student {
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<StudentCourse> studentCourses = new ArrayList<>();
+
+    @Column(unique = true)
+    private String qrToken;
+
+    @PrePersist
+    public void generateQrToken() {
+        if (this.qrToken == null || this.qrToken.isEmpty()) {
+            this.qrToken = UUID.randomUUID().toString();
+        }
+    }
 
     @Transient
     public Integer getAge() {

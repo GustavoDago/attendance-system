@@ -37,10 +37,19 @@ public class AttendanceService {
     @Autowired
     private UserMapper userMapper;
 
-    public AttendanceResponse recordAttendance(Long studentId, AttendanceType type) {
-        Student student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new RuntimeException("Student not found"));
+    public AttendanceResponse recordAttendance(AttendanceRequest request) {
+        Student student;
+        if (request.getQrToken() != null && !request.getQrToken().isEmpty()) {
+            student = studentRepository.findByQrToken(request.getQrToken())
+                    .orElseThrow(() -> new RuntimeException("Código QR inválido o estudiante no encontrado"));
+        } else if (request.getStudentId() != null) {
+            student = studentRepository.findById(request.getStudentId())
+                    .orElseThrow(() -> new RuntimeException("Student not found"));
+        } else {
+            throw new RuntimeException("Debe proporcionar un ID de estudiante o un Token QR");
+        }
 
+        AttendanceType type = request.getType();
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startOfDay = now.toLocalDate().atStartOfDay();
 

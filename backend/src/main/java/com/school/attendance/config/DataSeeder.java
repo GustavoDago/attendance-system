@@ -19,6 +19,7 @@ public class DataSeeder implements CommandLineRunner {
     private final UserRepository userRepository;
     private final CourseRepository courseRepository;
     private final SubjectRepository subjectRepository;
+    private final CourseScheduleRepository courseScheduleRepository;
     private final PasswordEncoder passwordEncoder;
     private final ExcelImportService excelImportService;
 
@@ -29,7 +30,7 @@ public class DataSeeder implements CommandLineRunner {
 
             // 1. Create Subjects
             List<Subject> subjects = new ArrayList<>();
-            String[] subjectNames = {"Matemática", "Lengua", "Historia", "Geografía", "Física", "Química", "Biología", "Educación Física"};
+            String[] subjectNames = {"Matemática", "Lengua", "Historia", "Geografía", "Física", "Química", "Biología", "Educación Física", "Taller"};
             for (String name : subjectNames) {
                 subjects.add(subjectRepository.save(Subject.builder().name(name).build()));
             }
@@ -98,7 +99,29 @@ public class DataSeeder implements CommandLineRunner {
                         .role(Role.PRECEPTOR)
                         .assignedCourses(managedCourses)
                         .build();
-                userRepository.save(preceptor);
+            // 7. Seed Course Schedules (Res. 1650/2024 logic with Groups)
+            for (Course course : courses) {
+                for (java.time.DayOfWeek day : java.time.DayOfWeek.values()) {
+                    if (day == java.time.DayOfWeek.SATURDAY || day == java.time.DayOfWeek.SUNDAY) continue;
+                    
+                    // Horario para Grupo 1
+                    int countG1 = (day == java.time.DayOfWeek.WEDNESDAY) ? 3 : 2;
+                    courseScheduleRepository.save(CourseSchedule.builder()
+                            .course(course)
+                            .groupNumber(1)
+                            .dayOfWeek(day)
+                            .activityCount(countG1)
+                            .build());
+
+                    // Horario para Grupo 2
+                    int countG2 = (day == java.time.DayOfWeek.TUESDAY) ? 3 : 2;
+                    courseScheduleRepository.save(CourseSchedule.builder()
+                            .course(course)
+                            .groupNumber(2)
+                            .dayOfWeek(day)
+                            .activityCount(countG2)
+                            .build());
+                }
             }
 
             System.out.println("Data setup complete. Users: " + userRepository.count());

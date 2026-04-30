@@ -54,7 +54,8 @@ public class UserMapper {
                 .birthPlace(student.getBirthPlace())
                 .studentFileId(student.getStudentFileId())
                 .guardianName(student.getGuardianName())
-                .guardianPhone(student.getGuardianPhone());
+                .guardianPhone(student.getGuardianPhone())
+                .qrToken(student.getQrToken());
 
         if (student.getStudentCourses() != null && !student.getStudentCourses().isEmpty()) {
             // For now, if multiple, we take the first or consolidate
@@ -88,6 +89,7 @@ public class UserMapper {
                 .studentFileId(dto.getStudentFileId())
                 .guardianName(dto.getGuardianName())
                 .guardianPhone(dto.getGuardianPhone())
+                .qrToken(dto.getQrToken())
                 .build();
     }
 }

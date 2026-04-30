@@ -19,7 +19,7 @@ public class AttendanceController {
 
     @PostMapping
     public ResponseEntity<AttendanceResponse> recordAttendance(@RequestBody AttendanceRequest request) {
-        return ResponseEntity.ok(attendanceService.recordAttendance(request.getStudentId(), request.getType()));
+        return ResponseEntity.ok(attendanceService.recordAttendance(request));
     }
 
     @GetMapping("/present")

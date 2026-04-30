@@ -30,4 +30,5 @@ public class StudentDTO {
     private String courseShift;
     private Integer orderNumber;
     private Integer groupNumber;
+    private String qrToken;
 }

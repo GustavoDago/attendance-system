@@ -6,5 +6,6 @@ import lombok.Data;
 @Data
 public class AttendanceRequest {
     private Long studentId;
+    private String qrToken;
     private AttendanceType type;
 }

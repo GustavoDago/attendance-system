@@ -8,6 +8,9 @@ import Reports from './pages/Admin/Reports';
 import QRCodePage from './pages/Admin/QRCodePage';
 import Login from './pages/Admin/Login';
 import Dashboard from './pages/Admin/Dashboard';
+import StudentList from './pages/Admin/StudentList';
+import ManualAttendancePage from './pages/Admin/ManualAttendancePage';
+import SubjectReportPage from './pages/Admin/SubjectReportPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { ToastContainer } from 'react-toastify';
@@ -30,9 +33,12 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<Dashboard />} />
+              <Route path="attendance/manual" element={<ManualAttendancePage />} />
+              <Route path="students" element={<StudentList />} />
               <Route path="users" element={<UserList />} />
               <Route path="users/add" element={<UserForm />} />
               <Route path="reports" element={<Reports />} />
+              <Route path="reports/subjects" element={<SubjectReportPage />} />
             </Route>
             {/* Print QR Route */}
             <Route path="/admin/qr/:id" element={<QRCodePage />} />

@@ -69,24 +69,24 @@ const Scanner = () => {
         };
 
         // Inner function to capture latest 'type'
-        async function handleScan(userId) {
+        async function handleScan(qrToken) {
             try {
                 const response = await axios.post('/api/attendance', {
-                    userId: userId,
+                    qrToken: qrToken,
                     type: type
                 });
 
-                const user = response.data.user;
+                const student = response.data.student;
                 const recordType = response.data.type;
 
-                let successMsg = `¡Bienvenido, ${user.firstName} ${user.lastName}!`;
+                let successMsg = `¡Bienvenido, ${student.firstName} ${student.lastName}!`;
                 let msgType = 'success';
 
                 if (recordType === 'LATE') {
-                    successMsg = `¡Ingreso registrado (TARDE), ${user.firstName}!`;
+                    successMsg = `¡Ingreso registrado (TARDE), ${student.firstName}!`;
                     msgType = 'warning';
                 } else if (recordType === 'EXIT') {
-                    successMsg = `¡Hasta luego, ${user.firstName} ${user.lastName}!`;
+                    successMsg = `¡Hasta luego, ${student.firstName} ${student.lastName}!`;
                 }
 
                 setMessage({
