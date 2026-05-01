@@ -24,8 +24,15 @@ const ManualAttendancePage = () => {
                 axios.get('/api/common/courses'),
                 axios.get('/api/common/subjects')
             ]);
-            setCourses(coursesRes.data);
-            setSubjects(subjectsRes.data);
+            setCourses(Array.isArray(coursesRes.data) ? coursesRes.data : []);
+            setSubjects(Array.isArray(subjectsRes.data) ? subjectsRes.data : []);
+            
+            if (!Array.isArray(coursesRes.data)) {
+                console.error('API /api/common/courses returned non-array:', coursesRes.data);
+            }
+            if (!Array.isArray(subjectsRes.data)) {
+                console.error('API /api/common/subjects returned non-array:', subjectsRes.data);
+            }
         } catch (error) {
             toast.error('Error al cargar metadatos');
         }
@@ -89,7 +96,7 @@ const ManualAttendancePage = () => {
                     <label>Curso:</label>
                     <select value={selectedCourse} onChange={(e) => setSelectedCourse(e.target.value)}>
                         <option value="">Seleccione...</option>
-                        {courses.map(c => (
+                        {Array.isArray(courses) && courses.map(c => (
                             <option key={c.id} value={c.id}>{c.yearLabel} {c.division} - {c.shift}</option>
                         ))}
                     </select>
@@ -119,7 +126,7 @@ const ManualAttendancePage = () => {
                     <label>Materia (opcional):</label>
                     <select value={selectedSubject} onChange={(e) => setSelectedSubject(e.target.value)}>
                         <option value="">General</option>
-                        {subjects.map(s => (
+                        {Array.isArray(subjects) && subjects.map(s => (
                             <option key={s.id} value={s.id}>{s.name}</option>
                         ))}
                     </select>

@@ -99,6 +99,9 @@ public class DataSeeder implements CommandLineRunner {
                         .role(Role.PRECEPTOR)
                         .assignedCourses(managedCourses)
                         .build();
+                userRepository.save(preceptor);
+            }
+
             // 7. Seed Course Schedules (Res. 1650/2024 logic with Groups)
             for (Course course : courses) {
                 for (java.time.DayOfWeek day : java.time.DayOfWeek.values()) {

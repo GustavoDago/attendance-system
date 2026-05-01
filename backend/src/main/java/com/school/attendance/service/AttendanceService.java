@@ -1,5 +1,6 @@
 package com.school.attendance.service;
 
+import com.school.attendance.dto.AttendanceRequest;
 import com.school.attendance.dto.AttendanceResponse;
 import com.school.attendance.dto.DashboardStatsDTO;
 import com.school.attendance.dto.StudentDTO;

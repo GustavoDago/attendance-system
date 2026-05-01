@@ -1,6 +1,8 @@
 package com.school.attendance.mapper;
 
+import com.school.attendance.dto.CourseDTO;
 import com.school.attendance.dto.StudentDTO;
+import com.school.attendance.dto.SubjectDTO;
 import com.school.attendance.dto.UserDTO;
 import com.school.attendance.model.*;
 import org.springframework.stereotype.Component;
@@ -90,6 +92,25 @@ public class UserMapper {
                 .guardianName(dto.getGuardianName())
                 .guardianPhone(dto.getGuardianPhone())
                 .qrToken(dto.getQrToken())
+                .build();
+    }
+
+    public CourseDTO toCourseDTO(Course course) {
+        if (course == null) return null;
+        return CourseDTO.builder()
+                .id(course.getId())
+                .year(course.getYear())
+                .division(course.getDivision())
+                .shift(course.getShift() != null ? course.getShift().name() : null)
+                .yearLabel(course.getYearLabel())
+                .build();
+    }
+
+    public SubjectDTO toSubjectDTO(Subject subject) {
+        if (subject == null) return null;
+        return SubjectDTO.builder()
+                .id(subject.getId())
+                .name(subject.getName())
                 .build();
     }
 }

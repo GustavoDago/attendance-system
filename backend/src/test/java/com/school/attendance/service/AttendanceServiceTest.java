@@ -1,5 +1,6 @@
 package com.school.attendance.service;
 
+import com.school.attendance.dto.AttendanceRequest;
 import com.school.attendance.dto.AttendanceResponse;
 import com.school.attendance.dto.StudentDTO;
 import com.school.attendance.mapper.UserMapper;
@@ -51,7 +52,10 @@ class AttendanceServiceTest {
         StudentDTO studentDTO = StudentDTO.builder().id(1L).firstName("John").lastName("Doe").dni("123456").build();
         when(userMapper.toStudentDTO(student)).thenReturn(studentDTO);
 
-        AttendanceResponse response = attendanceService.recordAttendance(1L, AttendanceType.ENTRY);
+        AttendanceRequest request = new AttendanceRequest();
+        request.setStudentId(1L);
+        request.setType(AttendanceType.ENTRY);
+        AttendanceResponse response = attendanceService.recordAttendance(request);
 
         assertNotNull(response);
         assertEquals(1L, response.getId());
