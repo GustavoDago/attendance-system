@@ -44,6 +44,13 @@ public class ActivityAttendanceController {
         for (StudentStatusRecord r : request.getRecords()) {
             Student student = studentRepository.findById(r.getStudentId())
                     .orElseThrow(() -> new RuntimeException("Student not found"));
+
+            // Validation: Taller is only for 4th year and above
+            if (r.getActivityType() == ActivityType.TALLER) {
+                boolean isEligible = student.getStudentCourses().stream()
+                        .anyMatch(sc -> sc.getCourse().getYear() >= 4);
+                if (!isEligible) continue;
+            }
             
             ActivityAttendance attendance = repository.findByStudentAndDateAndActivityType(student, date, r.getActivityType())
                     .orElse(ActivityAttendance.builder()

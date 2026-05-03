@@ -49,7 +49,7 @@ const ManualAttendancePage = () => {
                 const statuses = {};
                 activityTypes.forEach(type => {
                     const record = existingAttendance.find(a => a.student.id === s.id && a.activityType === type);
-                    statuses[type] = record ? record.status : 'PRESENTE';
+                    statuses[type] = record ? record.status : (type === 'INSTITUCIONAL' ? 'NO_APLICA' : 'PRESENTE');
                 });
                 return { ...s, statuses };
             });
@@ -96,6 +96,28 @@ const ManualAttendancePage = () => {
         }
     };
 
+    const translateShift = (shift) => {
+        switch (shift) {
+            case 'MORNING': return 'Mañana';
+            case 'AFTERNOON': return 'Tarde';
+            case 'EVENING': return 'Noche';
+            default: return shift;
+        }
+    };
+
+    const getStatusLabel = (status) => {
+        switch (status) {
+            case 'PRESENTE': return 'Presente';
+            case 'AUSENTE': return 'Ausente';
+            case 'TARDANZA_1_4': return 'Tardanza 1/4';
+            case 'TARDANZA_1_2': return 'Tardanza 1/2';
+            case 'RETIRO_ANTICIPADO': return 'Retiro Anticipado';
+            case 'JUSTIFICADA': return 'Justificada';
+            case 'NO_APLICA': return 'No Aplica';
+            default: return status;
+        }
+    };
+
     return (
         <div style={styles.container}>
             <h1>Carga de Asistencia Manual - Multi-Actividad</h1>
@@ -106,7 +128,9 @@ const ManualAttendancePage = () => {
                     <select value={selectedCourse} onChange={(e) => setSelectedCourse(e.target.value)}>
                         <option value="">Seleccione...</option>
                         {Array.isArray(courses) && courses.map(c => (
-                            <option key={c.id} value={c.id}>{c.yearLabel} {c.division} - {c.shift}</option>
+                            <option key={c.id} value={c.id}>
+                                {c.yearLabel} {c.division} - Turno {translateShift(c.shift)}
+                            </option>
                         ))}
                     </select>
                 </div>
@@ -132,27 +156,50 @@ const ManualAttendancePage = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {students.map((student) => (
-                                <tr key={student.id} style={styles.tr}>
-                                    <td style={styles.tdName}>{student.lastName}, {student.firstName}</td>
-                                    {activityTypes.map(type => (
-                                        <td key={type} style={styles.td}>
-                                            <select 
-                                                value={student.statuses[type]} 
-                                                onChange={(e) => handleStatusChange(student.id, type, e.target.value)}
-                                                style={{...styles.select, ...getStatusStyle(student.statuses[type])}}
-                                            >
-                                                <option value="PRESENTE">P</option>
-                                                <option value="AUSENTE">A</option>
-                                                <option value="TARDANZA_1_4">T 1/4</option>
-                                                <option value="TARDANZA_1_2">T 1/2</option>
-                                                <option value="RETIRO_ANTICIPADO">R 1/2</option>
-                                                <option value="JUSTIFICADA">AJ</option>
-                                            </select>
-                                        </td>
-                                    ))}
-                                </tr>
-                            ))}
+                            {students.map((student) => {
+                                const selectedCourseData = courses.find(c => c.id === parseInt(selectedCourse));
+                                const isTallerEnabled = selectedCourseData && selectedCourseData.year >= 4;
+                                
+                                return (
+                                    <tr key={student.id} style={styles.tr}>
+                                        <td style={styles.tdName}>{student.lastName}, {student.firstName}</td>
+                                        {activityTypes.map(type => {
+                                            const isDisabled = type === 'TALLER' && !isTallerEnabled;
+                                            const currentStatus = student.statuses[type];
+                                            
+                                            return (
+                                                <td key={type} style={styles.td}>
+                                                    <select 
+                                                        value={currentStatus} 
+                                                        onChange={(e) => handleStatusChange(student.id, type, e.target.value)}
+                                                        disabled={isDisabled}
+                                                        title={getStatusLabel(currentStatus)}
+                                                        style={{
+                                                            ...styles.select, 
+                                                            ...getStatusStyle(currentStatus),
+                                                            ...(isDisabled ? styles.disabledSelect : {})
+                                                        }}
+                                                    >
+                                                        {isDisabled ? (
+                                                            <option value="PRESENTE" title="No Aplica (Taller)">-</option>
+                                                        ) : (
+                                                            <>
+                                                                <option value="PRESENTE" title="Presente">P</option>
+                                                                <option value="AUSENTE" title="Ausente">A</option>
+                                                                <option value="TARDANZA_1_4" title="Tardanza 1/4">T 1/4</option>
+                                                                <option value="TARDANZA_1_2" title="Tardanza 1/2">T 1/2</option>
+                                                                <option value="RETIRO_ANTICIPADO" title="Retiro Anticipado">R 1/2</option>
+                                                                <option value="JUSTIFICADA" title="Ausente Justificada">AJ</option>
+                                                                <option value="NO_APLICA" title="No Aplica">N/A</option>
+                                                            </>
+                                                        )}
+                                                    </select>
+                                                </td>
+                                            );
+                                        })}
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                     <div style={styles.footer}>
@@ -171,6 +218,7 @@ const getStatusStyle = (status) => {
         case 'PRESENTE': return { backgroundColor: '#e8f5e9', color: '#2e7d32' };
         case 'AUSENTE': return { backgroundColor: '#ffebee', color: '#c62828' };
         case 'JUSTIFICADA': return { backgroundColor: '#e3f2fd', color: '#1565c0' };
+        case 'NO_APLICA': return { backgroundColor: '#f3f4f6', color: '#6b7280' };
         default: return { backgroundColor: '#fff3e0', color: '#ef6c00' };
     }
 };
@@ -216,6 +264,12 @@ const styles = {
         border: '1px solid #e5e7eb',
         fontSize: '0.85rem',
         width: '80px'
+    },
+    disabledSelect: {
+        backgroundColor: '#f3f4f6',
+        color: '#9ca3af',
+        cursor: 'not-allowed',
+        border: '1px dashed #d1d5db'
     },
     footer: { marginTop: '20px', display: 'flex', justifyContent: 'flex-end' },
     saveButton: {
