@@ -25,28 +25,37 @@ public class AuthController {
     private final JwtService jwtService;
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getDni(),
-                        request.getPassword()));
-
-        User user = userRepository.findByDni(request.getDni())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        String jwtToken = jwtService.generateToken(user);
-
-        UserDTO userDTO = UserDTO.builder()
-                .id(user.getId())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .dni(user.getDni())
-                .role(user.getRole())
-                .build();
-
-        return ResponseEntity.ok(AuthResponse.builder()
-                .token(jwtToken)
-                .user(userDTO)
-                .build());
+    public ResponseEntity<?> login(@RequestBody AuthRequest request) {
+        try {
+            System.out.println("Login attempt for DNI: " + request.getDni());
+            
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getDni(),
+                            request.getPassword()));
+ 
+            User user = userRepository.findByDni(request.getDni())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+ 
+            String jwtToken = jwtService.generateToken(user);
+ 
+            UserDTO userDTO = UserDTO.builder()
+                    .id(user.getId())
+                    .firstName(user.getFirstName())
+                    .lastName(user.getLastName())
+                    .dni(user.getDni())
+                    .role(user.getRole())
+                    .build();
+ 
+            System.out.println("Login successful for DNI: " + request.getDni());
+            return ResponseEntity.ok(AuthResponse.builder()
+                    .token(jwtToken)
+                    .user(userDTO)
+                    .build());
+        } catch (Exception e) {
+            System.err.println("Login error: " + e.getMessage());
+            e.printStackTrace();
+            throw e; // Re-throw to let GlobalExceptionHandler handle it, but now we have the trace in logs
+        }
     }
 }

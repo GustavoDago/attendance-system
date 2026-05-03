@@ -37,21 +37,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        jwt = authHeader.substring(7);
-        userDni = jwtService.extractUsername(jwt);
+        try {
+            jwt = authHeader.substring(7);
+            userDni = jwtService.extractUsername(jwt);
 
-        if (userDni != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userDni);
+            if (userDni != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userDni);
 
-            if (jwtService.isTokenValid(jwt, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities());
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                if (jwtService.isTokenValid(jwt, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities());
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
             }
+        } catch (Exception e) {
+            // Log the error (e.g. ExpiredJwtException, SignatureException, etc.)
+            System.err.println("JWT Authentication failed: " + e.getMessage());
+            // Do not throw the exception, let the request proceed unauthenticated.
+            // Spring Security will then deny access if the endpoint requires authentication,
+            // or allow access if the endpoint is public (like /api/auth/login).
         }
+        
         filterChain.doFilter(request, response);
     }
 }

@@ -15,9 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -90,7 +90,8 @@ public class ExcelImportService {
         String phone = getCellValueAsString(row.getCell(13));
         String studentFileId = getCellValueAsString(row.getCell(14));
 
-        if (dni == null || dni.isEmpty() || firstName.isEmpty() || lastName.isEmpty()) {
+        if (firstName.isEmpty() || lastName.isEmpty()) {
+            log.warn("Skipping row {}: firstName or lastName is missing.", row.getRowNum() + 1);
             return null;
         }
 
@@ -111,11 +112,20 @@ public class ExcelImportService {
 
         // Check if student exists
         final String finalDni = dni;
-        Student student = studentRepository.findByDni(finalDni)
-                .orElseGet(() -> studentRepository.save(Student.builder()
+        final String fName = firstName;
+        final String lName = lastName;
+        
+        Optional<Student> existingStudent;
+        if (finalDni != null && !finalDni.isEmpty()) {
+            existingStudent = studentRepository.findByDni(finalDni);
+        } else {
+            existingStudent = studentRepository.findByFirstNameAndLastName(fName, lName);
+        }
+
+        Student student = existingStudent.orElseGet(() -> studentRepository.save(Student.builder()
                         .dni(finalDni)
-                        .firstName(firstName)
-                        .lastName(lastName)
+                        .firstName(fName)
+                        .lastName(lName)
                         .nationality(nationality)
                         .birthPlace(birthPlace)
                         .birthDate(birthDate)
@@ -184,10 +194,13 @@ public class ExcelImportService {
     private Integer parseInteger(String val) {
         if (val == null || val.isEmpty()) return null;
         try {
-            // Remove any .0 from numeric strings
             if (val.endsWith(".0")) val = val.substring(0, val.length() - 2);
-            return Integer.parseInt(val);
-        } catch (NumberFormatException e) {
+            Matcher matcher = Pattern.compile("(\\d+)").matcher(val);
+            if (matcher.find()) {
+                return Integer.parseInt(matcher.group(1));
+            }
+            return null;
+        } catch (Exception e) {
             return null;
         }
     }
@@ -204,7 +217,8 @@ public class ExcelImportService {
 
     private String normalizeDni(String dni) {
         if (dni == null) return null;
-        return dni.replaceAll("[^0-9]", "");
+        String normalized = dni.replaceAll("[^0-9]", "");
+        return normalized.isEmpty() ? null : normalized;
     }
 
     private Course findOrCreateCourse(Integer year, String division, Shift shift) {

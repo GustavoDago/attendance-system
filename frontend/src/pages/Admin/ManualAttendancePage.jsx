@@ -2,14 +2,12 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
+const activityTypes = ['AULA', 'TALLER', 'EDUCACION_FISICA', 'INSTITUCIONAL'];
+
 const ManualAttendancePage = () => {
     const [courses, setCourses] = useState([]);
-    const [subjects, setSubjects] = useState([]);
     const [selectedCourse, setSelectedCourse] = useState('');
-    const [selectedGroup, setSelectedGroup] = useState('');
-    const [selectedSubject, setSelectedSubject] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-    const [activityType, setActivityType] = useState('AULA');
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -20,18 +18,13 @@ const ManualAttendancePage = () => {
 
     const fetchMetadata = async () => {
         try {
-            const [coursesRes, subjectsRes] = await Promise.all([
-                axios.get('/api/common/courses'),
-                axios.get('/api/common/subjects')
+            const [coursesRes] = await Promise.all([
+                axios.get('/api/common/courses')
             ]);
             setCourses(Array.isArray(coursesRes.data) ? coursesRes.data : []);
-            setSubjects(Array.isArray(subjectsRes.data) ? subjectsRes.data : []);
             
             if (!Array.isArray(coursesRes.data)) {
                 console.error('API /api/common/courses returned non-array:', coursesRes.data);
-            }
-            if (!Array.isArray(subjectsRes.data)) {
-                console.error('API /api/common/subjects returned non-array:', subjectsRes.data);
             }
         } catch (error) {
             toast.error('Error al cargar metadatos');
@@ -45,38 +38,54 @@ const ManualAttendancePage = () => {
         }
         setLoading(true);
         try {
-            const params = { courseId: selectedCourse };
-            if (selectedGroup) params.groupNumber = selectedGroup;
+            const [studentsRes, attendanceRes] = await Promise.all([
+                axios.get(`/api/students`, { params: { courseId: selectedCourse } }),
+                axios.get(`/api/activity-attendance`, { params: { courseId: selectedCourse, date } })
+            ]);
+
+            const existingAttendance = attendanceRes.data;
             
-            const response = await axios.get(`/api/students`, { params });
-            // Initialize each student with PRESENTE status
-            const studentList = response.data.map(s => ({
-                ...s,
-                status: 'PRESENTE'
-            }));
+            const studentList = studentsRes.data.map(s => {
+                const statuses = {};
+                activityTypes.forEach(type => {
+                    const record = existingAttendance.find(a => a.student.id === s.id && a.activityType === type);
+                    statuses[type] = record ? record.status : 'PRESENTE';
+                });
+                return { ...s, statuses };
+            });
             setStudents(studentList);
         } catch (error) {
-            toast.error('Error al cargar alumnos');
+            toast.error('Error al cargar alumnos o asistencia previa');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleStatusChange = (studentId, newStatus) => {
-        setStudents(students.map(s => s.id === studentId ? { ...s, status: newStatus } : s));
+    const handleStatusChange = (studentId, type, newStatus) => {
+        setStudents(students.map(s => 
+            s.id === studentId 
+                ? { ...s, statuses: { ...s.statuses, [type]: newStatus } } 
+                : s
+        ));
     };
 
     const handleSave = async () => {
         setSaving(true);
         try {
+            const records = [];
+            students.forEach(s => {
+                activityTypes.forEach(type => {
+                    records.push({
+                        studentId: s.id,
+                        activityType: type,
+                        status: s.statuses[type]
+                    });
+                });
+            });
+
             const payload = {
                 date,
-                activityType,
-                subjectId: selectedSubject || null,
-                records: students.map(s => ({
-                    studentId: s.id,
-                    status: s.status
-                }))
+                records
             };
             await axios.post('/api/activity-attendance/batch', payload);
             toast.success('Asistencia guardada con éxito');
@@ -89,7 +98,7 @@ const ManualAttendancePage = () => {
 
     return (
         <div style={styles.container}>
-            <h1>Carga de Asistencia Manual (Res. 1650/2024)</h1>
+            <h1>Carga de Asistencia Manual - Multi-Actividad</h1>
             
             <div style={styles.filters}>
                 <div style={styles.field}>
@@ -102,37 +111,11 @@ const ManualAttendancePage = () => {
                     </select>
                 </div>
                 <div style={styles.field}>
-                    <label>Grupo:</label>
-                    <select value={selectedGroup} onChange={(e) => setSelectedGroup(e.target.value)}>
-                        <option value="">Todos</option>
-                        <option value="1">Grupo 1</option>
-                        <option value="2">Grupo 2</option>
-                        <option value="3">Grupo 3</option>
-                    </select>
-                </div>
-                <div style={styles.field}>
                     <label>Fecha:</label>
                     <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
                 </div>
-                <div style={styles.field}>
-                    <label>Momento:</label>
-                    <select value={activityType} onChange={(e) => setActivityType(e.target.value)}>
-                        <option value="AULA">Aula</option>
-                        <option value="TALLER">Taller</option>
-                        <option value="EDUCACION_FISICA">Educación Física</option>
-                    </select>
-                </div>
-                <div style={styles.field}>
-                    <label>Materia (opcional):</label>
-                    <select value={selectedSubject} onChange={(e) => setSelectedSubject(e.target.value)}>
-                        <option value="">General</option>
-                        {Array.isArray(subjects) && subjects.map(s => (
-                            <option key={s.id} value={s.id}>{s.name}</option>
-                        ))}
-                    </select>
-                </div>
                 <button onClick={handleFetchStudents} disabled={loading} style={styles.button}>
-                    {loading ? 'Cargando...' : 'Cargar Alumnos'}
+                    {loading ? 'Cargando...' : 'Cargar Planilla'}
                 </button>
             </div>
 
@@ -141,37 +124,40 @@ const ManualAttendancePage = () => {
                     <table style={styles.table}>
                         <thead>
                             <tr>
-                                <th>Orden</th>
-                                <th>Alumno</th>
-                                <th>Estado</th>
+                                <th style={styles.th}>Alumno</th>
+                                <th style={styles.th}>Aula</th>
+                                <th style={styles.th}>Taller</th>
+                                <th style={styles.th}>Ed. Física</th>
+                                <th style={styles.th}>Inst.</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {students.map((student, index) => (
-                                <tr key={student.id}>
-                                    <td>{index + 1}</td>
-                                    <td>{student.lastName}, {student.firstName}</td>
-                                    <td>
-                                        <select 
-                                            value={student.status} 
-                                            onChange={(e) => handleStatusChange(student.id, e.target.value)}
-                                            style={getStatusStyle(student.status)}
-                                        >
-                                            <option value="PRESENTE">Presente</option>
-                                            <option value="AUSENTE">Ausente</option>
-                                            <option value="TARDANZA_1_4">Tardanza (1/4)</option>
-                                            <option value="TARDANZA_1_2">Tardanza (1/2)</option>
-                                            <option value="RETIRO_ANTICIPADO">Retiro (1/2)</option>
-                                            <option value="JUSTIFICADA">Justificada</option>
-                                        </select>
-                                    </td>
+                            {students.map((student) => (
+                                <tr key={student.id} style={styles.tr}>
+                                    <td style={styles.tdName}>{student.lastName}, {student.firstName}</td>
+                                    {activityTypes.map(type => (
+                                        <td key={type} style={styles.td}>
+                                            <select 
+                                                value={student.statuses[type]} 
+                                                onChange={(e) => handleStatusChange(student.id, type, e.target.value)}
+                                                style={{...styles.select, ...getStatusStyle(student.statuses[type])}}
+                                            >
+                                                <option value="PRESENTE">P</option>
+                                                <option value="AUSENTE">A</option>
+                                                <option value="TARDANZA_1_4">T 1/4</option>
+                                                <option value="TARDANZA_1_2">T 1/2</option>
+                                                <option value="RETIRO_ANTICIPADO">R 1/2</option>
+                                                <option value="JUSTIFICADA">AJ</option>
+                                            </select>
+                                        </td>
+                                    ))}
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                     <div style={styles.footer}>
                         <button onClick={handleSave} disabled={saving} style={styles.saveButton}>
-                            {saving ? 'Guardando...' : 'Confirmar Asistencia'}
+                            {saving ? 'Guardando...' : 'Confirmar Todo'}
                         </button>
                     </div>
                 </div>
@@ -190,7 +176,7 @@ const getStatusStyle = (status) => {
 };
 
 const styles = {
-    container: { padding: '20px' },
+    container: { padding: '20px', maxWidth: '1200px', margin: '0 auto' },
     filters: {
         display: 'flex',
         gap: '20px',
@@ -217,8 +203,20 @@ const styles = {
         padding: '20px',
         borderRadius: '12px',
         boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
+        overflowX: 'auto'
     },
     table: { width: '100%', borderCollapse: 'collapse' },
+    th: { textAlign: 'left', padding: '12px', borderBottom: '2px solid #f3f4f6' },
+    tr: { borderBottom: '1px solid #f3f4f6' },
+    tdName: { padding: '12px', fontWeight: '500', minWidth: '200px' },
+    td: { padding: '8px' },
+    select: {
+        padding: '6px',
+        borderRadius: '6px',
+        border: '1px solid #e5e7eb',
+        fontSize: '0.85rem',
+        width: '80px'
+    },
     footer: { marginTop: '20px', display: 'flex', justifyContent: 'flex-end' },
     saveButton: {
         padding: '12px 30px',

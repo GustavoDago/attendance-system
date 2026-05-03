@@ -17,5 +17,6 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     List<Student> findByCourse(@Param("course") Course course);
 
     Optional<Student> findByDni(String dni);
+    Optional<Student> findByFirstNameAndLastName(String firstName, String lastName);
     Optional<Student> findByQrToken(String qrToken);
 }
