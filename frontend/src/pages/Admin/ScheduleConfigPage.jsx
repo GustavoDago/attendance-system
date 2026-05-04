@@ -74,7 +74,7 @@ const ScheduleConfigPage = () => {
             courseId: selectedCourse,
             dayOfWeek: newDay,
             activityType: newActivity,
-            groupNumber: newGroup === '' ? null : parseInt(newGroup)
+            groupNumber: newGroup === '' ? null : newGroup
         };
 
         try {
@@ -157,6 +157,8 @@ const ScheduleConfigPage = () => {
                                     <option value="">Todos los Grupos</option>
                                     <option value="1">Grupo 1</option>
                                     <option value="2">Grupo 2</option>
+                                    <option value="3">Grupo 3</option>
+                                    <option value="U">Grupo U (Único)</option>
                                 </select>
                             </div>
                             <button type="submit" style={styles.button}>Agregar</button>

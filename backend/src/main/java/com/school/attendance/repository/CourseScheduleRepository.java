@@ -13,7 +13,7 @@ import java.util.Optional;
 
 @Repository
 public interface CourseScheduleRepository extends JpaRepository<CourseSchedule, Long> {
-    List<CourseSchedule> findByCourseAndDayOfWeekAndGroupNumber(Course course, DayOfWeek dayOfWeek, Integer groupNumber);
+    List<CourseSchedule> findByCourseAndDayOfWeekAndGroupNumber(Course course, DayOfWeek dayOfWeek, String groupNumber);
     List<CourseSchedule> findByCourseAndDayOfWeek(Course course, DayOfWeek dayOfWeek);
     
     @Query("SELECT cs FROM CourseSchedule cs WHERE cs.course = :course AND cs.dayOfWeek = :dayOfWeek " +
@@ -21,5 +21,5 @@ public interface CourseScheduleRepository extends JpaRepository<CourseSchedule, 
            "ORDER BY cs.groupNumber DESC")
     List<CourseSchedule> findRelevantSchedules(@Param("course") Course course, 
                                                @Param("dayOfWeek") DayOfWeek dayOfWeek, 
-                                               @Param("groupNumber") Integer groupNumber);
+                                               @Param("groupNumber") String groupNumber);
 }

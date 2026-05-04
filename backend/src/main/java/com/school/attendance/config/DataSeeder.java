@@ -136,7 +136,7 @@ public class DataSeeder implements CommandLineRunner {
                         if (day == java.time.DayOfWeek.TUESDAY) {
                             courseScheduleRepository.save(CourseSchedule.builder()
                                     .course(course)
-                                    .groupNumber(1)
+                                    .groupNumber("1")
                                     .dayOfWeek(day)
                                     .activityType(ActivityType.TALLER)
                                     .build());
@@ -144,7 +144,7 @@ public class DataSeeder implements CommandLineRunner {
                         if (day == java.time.DayOfWeek.WEDNESDAY) {
                             courseScheduleRepository.save(CourseSchedule.builder()
                                     .course(course)
-                                    .groupNumber(2)
+                                    .groupNumber("2")
                                     .dayOfWeek(day)
                                     .activityType(ActivityType.TALLER)
                                     .build());

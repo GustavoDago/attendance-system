@@ -52,6 +52,9 @@ public class Student {
     @Column(unique = true)
     private String qrToken;
 
+    @Builder.Default
+    private boolean active = true;
+
     @PrePersist
     public void generateQrToken() {
         if (this.qrToken == null || this.qrToken.isEmpty()) {

@@ -14,6 +14,7 @@ import SubjectReportPage from './pages/Admin/SubjectReportPage';
 import ScheduleConfigPage from './pages/Admin/ScheduleConfigPage';
 import HolidayConfigPage from './pages/Admin/HolidayConfigPage';
 import MonthlyReportPage from './pages/Admin/MonthlyReportPage';
+import StudentForm from './pages/Admin/StudentForm';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { ToastContainer } from 'react-toastify';
@@ -40,6 +41,8 @@ function App() {
               <Route path="schedules" element={<ScheduleConfigPage />} />
               <Route path="holidays" element={<HolidayConfigPage />} />
               <Route path="students" element={<StudentList />} />
+              <Route path="students/new" element={<StudentForm />} />
+              <Route path="students/edit/:id" element={<StudentForm />} />
               <Route path="users" element={<UserList />} />
               <Route path="users/add" element={<UserForm />} />
               <Route path="reports" element={<Reports />} />

@@ -36,5 +36,5 @@ public class StudentCourse {
     private Course course;
 
     private Integer orderNumber;
-    private Integer groupNumber;
+    private String groupNumber;
 }

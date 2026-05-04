@@ -57,7 +57,8 @@ public class UserMapper {
                 .studentFileId(student.getStudentFileId())
                 .guardianName(student.getGuardianName())
                 .guardianPhone(student.getGuardianPhone())
-                .qrToken(student.getQrToken());
+                .qrToken(student.getQrToken())
+                .active(student.isActive());
 
         if (student.getStudentCourses() != null && !student.getStudentCourses().isEmpty()) {
             // For now, if multiple, we take the first or consolidate
@@ -92,6 +93,7 @@ public class UserMapper {
                 .guardianName(dto.getGuardianName())
                 .guardianPhone(dto.getGuardianPhone())
                 .qrToken(dto.getQrToken())
+                .active(dto.isActive())
                 .build();
     }
 

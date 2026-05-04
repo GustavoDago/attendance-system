@@ -15,7 +15,7 @@ import java.time.DayOfWeek;
 public class CourseScheduleDTO {
     private Long id;
     private Long courseId;
-    private Integer groupNumber;
+    private String groupNumber;
     private DayOfWeek dayOfWeek;
     private ActivityType activityType;
 }

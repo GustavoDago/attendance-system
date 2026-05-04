@@ -103,7 +103,7 @@ public class ExcelImportService {
         // Parse numeric values
         Integer year = parseInteger(yearStr);
         Integer orderNumber = parseInteger(orderNumStr);
-        Integer groupNumber = parseInteger(groupNumStr);
+        String groupNumber = groupNumStr != null ? groupNumStr.trim() : null;
 
         Shift shift = parseShift(shiftStr);
 

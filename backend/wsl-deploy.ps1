@@ -1,4 +1,4 @@
-# =============================================================================
+﻿# =============================================================================
 # wsl-deploy.ps1
 # Orquesta el proceso de compilación nativa en WSL Debian.
 # Copia el código fuente al WSL, ejecuta la compilación y extrae el binario.
@@ -7,8 +7,8 @@
 # =============================================================================
 
 $WSL_DISTRO    = "Debian"
-$BACKEND_PATH  = "G:\Mochila\Antigravity\attendance-system\backend"
-$FRONTEND_PATH = "G:\Mochila\Antigravity\attendance-system\frontend"
+$BACKEND_PATH  = "F:\Mochila\Antigravity\attendance-system\backend"
+$FRONTEND_PATH = "F:\Mochila\Antigravity\attendance-system\frontend"
 $BINARY_NAME   = "attendance-backend"
 $LOCAL_TARGET  = "$BACKEND_PATH\target"
 
@@ -61,9 +61,8 @@ Write-Host "  Directorios ~/attendance-build y ~/frontend-build listos. ✓"
 Write-Host ""
 Write-Host "[2/4] Copiando código fuente al WSL..."
 
-# Convertir la ruta de Windows a ruta WSL (/mnt/g/...)
-$wslBackendPath = ($BACKEND_PATH -replace "\\", "/") -replace "^([A-Za-z]):", { "/mnt/$($_.Groups[1].Value.ToLower())" }
-$wslFrontendPath = ($FRONTEND_PATH -replace "\\", "/") -replace "^([A-Za-z]):", { "/mnt/$($_.Groups[1].Value.ToLower())" }
+$wslBackendPath = "/mnt/f/Mochila/Antigravity/attendance-system/backend"
+$wslFrontendPath = "/mnt/f/Mochila/Antigravity/attendance-system/frontend"
 
 wsl -d $WSL_DISTRO -- bash -c "cp '$wslBackendPath/pom.xml' ~/attendance-build/"
 if ($LASTEXITCODE -ne 0) { Write-Error "Fallo al copiar pom.xml."; exit 1 }
@@ -110,7 +109,7 @@ if (-not (Test-Path $LOCAL_TARGET)) {
 
 # Copiar desde WSL al filesystem de Windows usando el montaje directo /mnt/
 $localBinary = "$LOCAL_TARGET\$BINARY_NAME-linux"
-$wslOutputPath = ($localBinary -replace "\\", "/") -replace "^([A-Za-z]):", { "/mnt/$($_.Groups[1].Value.ToLower())" }
+$wslOutputPath = "/mnt/f/Mochila/Antigravity/attendance-system/backend/target/attendance-backend-linux"
 wsl -d $WSL_DISTRO -- bash -c "cp ~/$BINARY_NAME '$wslOutputPath'"
 if ($LASTEXITCODE -ne 0) { Write-Error "Fallo al extraer el binario."; exit 1 }
 

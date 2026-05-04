@@ -55,7 +55,7 @@ public class AttendanceReportService {
             // Obtener configuración del día para el curso y grupo del alumno
             StudentCourse studentCourse = record.getStudent().getStudentCourses().get(0);
             Course course = studentCourse.getCourse();
-            Integer groupNumber = studentCourse.getGroupNumber();
+            String groupNumber = studentCourse.getGroupNumber();
             DayOfWeek day = record.getDate().getDayOfWeek();
             
             // Buscar horario específico del grupo o general del curso

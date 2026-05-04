@@ -24,7 +24,7 @@ public class CourseSchedule {
     @JoinColumn(name = "course_id", nullable = false)
     private Course course;
 
-    private Integer groupNumber; // Opcional, para divisiones por grupo (Taller)
+    private String groupNumber; // Opcional, para divisiones por grupo (Taller)
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

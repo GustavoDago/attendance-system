@@ -29,6 +29,7 @@ public class StudentDTO {
     private String courseName;
     private String courseShift;
     private Integer orderNumber;
-    private Integer groupNumber;
+    private String groupNumber;
     private String qrToken;
+    private boolean active;
 }
