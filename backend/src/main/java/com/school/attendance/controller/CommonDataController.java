@@ -20,12 +20,36 @@ public class CommonDataController {
 
     private final CourseRepository courseRepository;
     private final SubjectRepository subjectRepository;
+    private final com.school.attendance.repository.CourseScheduleRepository courseScheduleRepository;
     private final UserMapper userMapper;
 
     @GetMapping("/courses")
     public List<CourseDTO> getAllCourses() {
         return courseRepository.findAll().stream()
                 .map(userMapper::toCourseDTO)
+                .collect(Collectors.toList());
+    }
+
+    @GetMapping("/courses/{courseId}/activities")
+    public List<com.school.attendance.dto.CourseScheduleDTO> getCourseActivities(
+            @org.springframework.web.bind.annotation.PathVariable Long courseId,
+            @org.springframework.web.bind.annotation.RequestParam @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate date,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) Integer groupNumber) {
+        
+        com.school.attendance.model.Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("Course not found"));
+        
+        java.time.DayOfWeek day = date.getDayOfWeek();
+        List<com.school.attendance.model.CourseSchedule> schedules = courseScheduleRepository.findByCourseAndDayOfWeek(course, day);
+        
+        return schedules.stream()
+                .map(cs -> com.school.attendance.dto.CourseScheduleDTO.builder()
+                        .id(cs.getId())
+                        .courseId(cs.getCourse().getId())
+                        .groupNumber(cs.getGroupNumber())
+                        .dayOfWeek(cs.getDayOfWeek())
+                        .activityType(cs.getActivityType())
+                        .build())
                 .collect(Collectors.toList());
     }
 

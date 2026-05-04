@@ -107,23 +107,49 @@ public class DataSeeder implements CommandLineRunner {
                 for (java.time.DayOfWeek day : java.time.DayOfWeek.values()) {
                     if (day == java.time.DayOfWeek.SATURDAY || day == java.time.DayOfWeek.SUNDAY) continue;
                     
-                    // Horario para Grupo 1
-                    int countG1 = (day == java.time.DayOfWeek.WEDNESDAY) ? 3 : 2;
+                    // Todos tienen AULA (sin importar el grupo, aplica a todos)
                     courseScheduleRepository.save(CourseSchedule.builder()
                             .course(course)
-                            .groupNumber(1)
+                            .groupNumber(null)
                             .dayOfWeek(day)
-                            .activityCount(countG1)
+                            .activityType(ActivityType.AULA)
                             .build());
 
-                    // Horario para Grupo 2
-                    int countG2 = (day == java.time.DayOfWeek.TUESDAY) ? 3 : 2;
-                    courseScheduleRepository.save(CourseSchedule.builder()
-                            .course(course)
-                            .groupNumber(2)
-                            .dayOfWeek(day)
-                            .activityCount(countG2)
-                            .build());
+                    // Educación Física según el año (para todo el curso)
+                    boolean hasEF = false;
+                    if (course.getYear() == 1 && (day == java.time.DayOfWeek.MONDAY || day == java.time.DayOfWeek.FRIDAY)) hasEF = true;
+                    if (course.getYear() == 2 && (day == java.time.DayOfWeek.TUESDAY || day == java.time.DayOfWeek.THURSDAY)) hasEF = true;
+                    if (course.getYear() == 3 && day == java.time.DayOfWeek.WEDNESDAY) hasEF = true;
+                    if (course.getYear() >= 4 && day == java.time.DayOfWeek.WEDNESDAY) hasEF = true;
+
+                    if (hasEF) {
+                        courseScheduleRepository.save(CourseSchedule.builder()
+                                .course(course)
+                                .groupNumber(null)
+                                .dayOfWeek(day)
+                                .activityType(ActivityType.EDUCACION_FISICA)
+                                .build());
+                    }
+
+                    // Taller dividido por grupos (solo para 4to, 5to y 6to)
+                    if (course.getYear() >= 4) {
+                        if (day == java.time.DayOfWeek.TUESDAY) {
+                            courseScheduleRepository.save(CourseSchedule.builder()
+                                    .course(course)
+                                    .groupNumber(1)
+                                    .dayOfWeek(day)
+                                    .activityType(ActivityType.TALLER)
+                                    .build());
+                        }
+                        if (day == java.time.DayOfWeek.WEDNESDAY) {
+                            courseScheduleRepository.save(CourseSchedule.builder()
+                                    .course(course)
+                                    .groupNumber(2)
+                                    .dayOfWeek(day)
+                                    .activityType(ActivityType.TALLER)
+                                    .build());
+                        }
+                    }
                 }
             }
 

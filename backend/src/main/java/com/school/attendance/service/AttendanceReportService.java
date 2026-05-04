@@ -18,6 +18,9 @@ public class AttendanceReportService {
 
     private final ActivityAttendanceRepository attendanceRepository;
     private final CourseScheduleRepository scheduleRepository;
+    private final com.school.attendance.repository.StudentRepository studentRepository;
+    private final com.school.attendance.repository.HolidayRepository holidayRepository;
+    private final com.school.attendance.repository.CourseRepository courseRepository;
 
     /**
      * Calcula la inasistencia institucional total de un alumno en un rango de fechas.
@@ -58,7 +61,7 @@ public class AttendanceReportService {
             // Buscar horario específico del grupo o general del curso
             List<CourseSchedule> schedules = scheduleRepository.findRelevantSchedules(course, day, groupNumber);
             
-            int activityCount = schedules.isEmpty() ? 1 : schedules.get(0).getActivityCount();
+            int activityCount = schedules.isEmpty() ? 1 : schedules.size();
 
             if (activityCount == 1) {
                 return 1.0;
@@ -70,10 +73,6 @@ public class AttendanceReportService {
         return 0.0;
     }
 
-    /**
-     * Calcula el porcentaje de asistencia por materia.
-     * @return Mapa de Subject Name -> Porcentaje (0-100)
-     */
     public Map<String, Double> calculateAttendancePerSubject(Student student, LocalDate start, LocalDate end) {
         List<ActivityAttendance> records = attendanceRepository.findByStudentAndDateBetween(student, start, end);
         
@@ -92,5 +91,90 @@ public class AttendanceReportService {
                                 }
                         )
                 ));
+    }
+
+    public com.school.attendance.dto.report.MonthlyReportDTO generateMonthlyReport(Long courseId, int year, int month) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("Curso no encontrado"));
+
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        int daysInMonth = startDate.lengthOfMonth();
+        LocalDate endDate = LocalDate.of(year, month, daysInMonth);
+        LocalDate annualStart = LocalDate.of(year, 3, 1);
+
+        List<Student> students = studentRepository.findAll().stream()
+                .filter(s -> s.getStudentCourses().stream().anyMatch(sc -> sc.getCourse().getId().equals(courseId)))
+                .collect(Collectors.toList());
+
+        List<Holiday> holidays = holidayRepository.findAll();
+
+        List<com.school.attendance.dto.report.StudentMonthlyReportDTO> studentReports = students.stream().map(student -> {
+            Map<Integer, com.school.attendance.dto.report.DailySummaryDTO> dailyRecords = new java.util.HashMap<>();
+            
+            for (int day = 1; day <= daysInMonth; day++) {
+                LocalDate currentDate = LocalDate.of(year, month, day);
+                
+                if (currentDate.getDayOfWeek() == DayOfWeek.SATURDAY || currentDate.getDayOfWeek() == DayOfWeek.SUNDAY) {
+                    dailyRecords.put(day, new com.school.attendance.dto.report.DailySummaryDTO("-", 0.0));
+                    continue;
+                }
+                
+                boolean isHoliday = holidays.stream().anyMatch(h -> h.getDate().equals(currentDate));
+                if (isHoliday) {
+                    dailyRecords.put(day, new com.school.attendance.dto.report.DailySummaryDTO("H", 0.0));
+                    continue;
+                }
+                
+                List<ActivityAttendance> dailyAttendances = attendanceRepository.findByStudentAndDateBetween(student, currentDate, currentDate);
+                if (dailyAttendances.isEmpty()) {
+                    dailyRecords.put(day, new com.school.attendance.dto.report.DailySummaryDTO("-", 0.0));
+                    continue;
+                }
+
+                double dailyAbsence = 0.0;
+                for (ActivityAttendance record : dailyAttendances) {
+                    dailyAbsence += calculateRecordWeight(record);
+                }
+
+                String label;
+                if (dailyAbsence == 0.0) {
+                    label = "P";
+                } else if (dailyAbsence == 1.0) {
+                    label = "A";
+                } else {
+                    label = String.valueOf(dailyAbsence);
+                }
+
+                dailyRecords.put(day, new com.school.attendance.dto.report.DailySummaryDTO(label, dailyAbsence));
+            }
+
+            double monthlyTotal = calculateTotalAbsences(student, startDate, endDate);
+            double annualTotal = calculateTotalAbsences(student, annualStart, endDate);
+
+            StudentCourse sc = student.getStudentCourses().stream()
+                    .filter(c -> c.getCourse().getId().equals(courseId))
+                    .findFirst().orElse(null);
+            
+            String orderNum = (sc != null && sc.getOrderNumber() != null) ? String.valueOf(sc.getOrderNumber()) : "";
+
+            return com.school.attendance.dto.report.StudentMonthlyReportDTO.builder()
+                    .studentId(student.getId())
+                    .lastName(student.getLastName())
+                    .firstName(student.getFirstName())
+                    .orderNumber(orderNum)
+                    .dailyRecords(dailyRecords)
+                    .monthlyTotal(monthlyTotal)
+                    .annualTotal(annualTotal)
+                    .build();
+        }).collect(Collectors.toList());
+
+        return com.school.attendance.dto.report.MonthlyReportDTO.builder()
+                .courseId(course.getId())
+                .courseName(course.getYearLabel() + " " + course.getDivision() + " " + course.getShift())
+                .year(year)
+                .month(month)
+                .daysInMonth(daysInMonth)
+                .students(studentReports)
+                .build();
     }
 }

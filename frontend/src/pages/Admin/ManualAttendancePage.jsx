@@ -9,6 +9,9 @@ const ManualAttendancePage = () => {
     const [selectedCourse, setSelectedCourse] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [students, setStudents] = useState([]);
+    const [scheduledActivities, setScheduledActivities] = useState([]);
+    const [suspendedActivities, setSuspendedActivities] = useState({});
+    const [holidayInfo, setHolidayInfo] = useState(null);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
 
@@ -31,25 +34,66 @@ const ManualAttendancePage = () => {
         }
     };
 
+    useEffect(() => {
+        checkHoliday(date);
+    }, [date]);
+
+    const checkHoliday = async (selectedDate) => {
+        try {
+            const res = await axios.get(`/api/holidays/check?date=${selectedDate}`);
+            if (res.status === 200 && res.data) {
+                setHolidayInfo(res.data);
+                setStudents([]); // Clear table if any
+            } else {
+                setHolidayInfo(null);
+            }
+        } catch (error) {
+            setHolidayInfo(null);
+        }
+    };
+
     const handleFetchStudents = async () => {
+        if (holidayInfo) {
+            toast.info('No se puede cargar asistencia en un día feriado');
+            return;
+        }
         if (!selectedCourse) {
             toast.warn('Seleccione un curso');
             return;
         }
         setLoading(true);
         try {
-            const [studentsRes, attendanceRes] = await Promise.all([
+            const [studentsRes, attendanceRes, activitiesRes] = await Promise.all([
                 axios.get(`/api/students`, { params: { courseId: selectedCourse } }),
-                axios.get(`/api/activity-attendance`, { params: { courseId: selectedCourse, date } })
+                axios.get(`/api/activity-attendance`, { params: { courseId: selectedCourse, date } }),
+                axios.get(`/api/common/courses/${selectedCourse}/activities`, { params: { date } })
             ]);
 
             const existingAttendance = attendanceRes.data;
+            const activeActivitiesData = activitiesRes.data;
+            
+            setScheduledActivities(activeActivitiesData);
+            setSuspendedActivities({});
             
             const studentList = studentsRes.data.map(s => {
                 const statuses = {};
                 activityTypes.forEach(type => {
                     const record = existingAttendance.find(a => a.student.id === s.id && a.activityType === type);
-                    statuses[type] = record ? record.status : (type === 'INSTITUCIONAL' ? 'NO_APLICA' : 'PRESENTE');
+                    
+                    const isScheduledForStudent = activeActivitiesData.some(act => 
+                        act.activityType === type && 
+                        (act.groupNumber === null || act.groupNumber === s.groupNumber)
+                    );
+
+                    let defaultStatus = 'PRESENTE';
+                    if (!isScheduledForStudent && type !== 'INSTITUCIONAL') {
+                        defaultStatus = 'NO_APLICA';
+                    }
+                    if (type === 'INSTITUCIONAL') {
+                        defaultStatus = 'NO_APLICA';
+                    }
+                    
+                    statuses[type] = record ? record.status : defaultStatus;
                 });
                 return { ...s, statuses };
             });
@@ -67,6 +111,24 @@ const ManualAttendancePage = () => {
                 ? { ...s, statuses: { ...s.statuses, [type]: newStatus } } 
                 : s
         ));
+    };
+
+    const handleSuspendToggle = (type) => {
+        const isSuspended = !suspendedActivities[type];
+        setSuspendedActivities({ ...suspendedActivities, [type]: isSuspended });
+        
+        // Update all students to NO_APLICA if suspended, or back to PRESENTE if unsuspended
+        if (isSuspended) {
+            setStudents(students.map(s => ({
+                ...s,
+                statuses: { ...s.statuses, [type]: 'NO_APLICA' }
+            })));
+        } else {
+            setStudents(students.map(s => ({
+                ...s,
+                statuses: { ...s.statuses, [type]: 'PRESENTE' }
+            })));
+        }
     };
 
     const handleSave = async () => {
@@ -118,6 +180,26 @@ const ManualAttendancePage = () => {
         }
     };
 
+    const renderActivityHeader = (title, type) => {
+        const isScheduledForAnyGroup = scheduledActivities.some(act => act.activityType === type) || type === 'INSTITUCIONAL';
+        return (
+            <th style={styles.th}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                    <span>{title}</span>
+                    {isScheduledForAnyGroup && type !== 'INSTITUCIONAL' && (
+                        <label style={styles.suspendLabel}>
+                            <input 
+                                type="checkbox" 
+                                checked={suspendedActivities[type] || false} 
+                                onChange={() => handleSuspendToggle(type)} 
+                            /> Suspender
+                        </label>
+                    )}
+                </div>
+            </th>
+        );
+    };
+
     return (
         <div style={styles.container}>
             <h1>Carga de Asistencia Manual - Multi-Actividad</h1>
@@ -138,33 +220,45 @@ const ManualAttendancePage = () => {
                     <label>Fecha:</label>
                     <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
                 </div>
-                <button onClick={handleFetchStudents} disabled={loading} style={styles.button}>
+                <button onClick={handleFetchStudents} disabled={loading || holidayInfo !== null} style={styles.button}>
                     {loading ? 'Cargando...' : 'Cargar Planilla'}
                 </button>
             </div>
 
-            {students.length > 0 && (
+            {holidayInfo && (
+                <div style={styles.holidayAlert}>
+                    <h3>🏖️ Día No Lectivo / Feriado</h3>
+                    <p><strong>Motivo:</strong> {holidayInfo.reason}</p>
+                    <p>No se requiere ni se permite la carga de asistencia para este día.</p>
+                </div>
+            )}
+
+            {!holidayInfo && students.length > 0 && (
                 <div style={styles.tableSection}>
                     <table style={styles.table}>
                         <thead>
                             <tr>
                                 <th style={styles.th}>Alumno</th>
-                                <th style={styles.th}>Aula</th>
-                                <th style={styles.th}>Taller</th>
-                                <th style={styles.th}>Ed. Física</th>
-                                <th style={styles.th}>Inst.</th>
+                                {renderActivityHeader('Aula', 'AULA')}
+                                {renderActivityHeader('Taller', 'TALLER')}
+                                {renderActivityHeader('Ed. Física', 'EDUCACION_FISICA')}
+                                {renderActivityHeader('Inst.', 'INSTITUCIONAL')}
                             </tr>
                         </thead>
                         <tbody>
                             {students.map((student) => {
-                                const selectedCourseData = courses.find(c => c.id === parseInt(selectedCourse));
-                                const isTallerEnabled = selectedCourseData && selectedCourseData.year >= 4;
-                                
                                 return (
                                     <tr key={student.id} style={styles.tr}>
                                         <td style={styles.tdName}>{student.lastName}, {student.firstName}</td>
                                         {activityTypes.map(type => {
-                                            const isDisabled = type === 'TALLER' && !isTallerEnabled;
+                                            const isScheduledForStudent = scheduledActivities.some(act => 
+                                                act.activityType === type && 
+                                                (act.groupNumber === null || act.groupNumber === student.groupNumber)
+                                            );
+                                            const isNotScheduled = !isScheduledForStudent && type !== 'INSTITUCIONAL';
+                                            const isSuspended = suspendedActivities[type] || false;
+                                            const isDisabled = isNotScheduled || isSuspended;
+                                            
                                             const currentStatus = student.statuses[type];
                                             
                                             return (
@@ -181,7 +275,7 @@ const ManualAttendancePage = () => {
                                                         }}
                                                     >
                                                         {isDisabled ? (
-                                                            <option value="PRESENTE" title="No Aplica (Taller)">-</option>
+                                                            <option value="NO_APLICA" title="No Aplica">N/A</option>
                                                         ) : (
                                                             <>
                                                                 <option value="PRESENTE" title="Presente">P</option>
@@ -225,6 +319,16 @@ const getStatusStyle = (status) => {
 
 const styles = {
     container: { padding: '20px', maxWidth: '1200px', margin: '0 auto' },
+    holidayAlert: {
+        backgroundColor: '#fef3c7',
+        border: '1px solid #f59e0b',
+        color: '#92400e',
+        padding: '20px',
+        borderRadius: '12px',
+        textAlign: 'center',
+        marginBottom: '20px',
+        boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
+    },
     filters: {
         display: 'flex',
         gap: '20px',
@@ -281,6 +385,15 @@ const styles = {
         cursor: 'pointer',
         fontSize: '1rem',
         fontWeight: 'bold'
+    },
+    suspendLabel: {
+        fontSize: '0.75rem',
+        fontWeight: 'normal',
+        color: '#d97706',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '4px',
+        cursor: 'pointer'
     }
 };
 

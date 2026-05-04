@@ -11,6 +11,9 @@ import Dashboard from './pages/Admin/Dashboard';
 import StudentList from './pages/Admin/StudentList';
 import ManualAttendancePage from './pages/Admin/ManualAttendancePage';
 import SubjectReportPage from './pages/Admin/SubjectReportPage';
+import ScheduleConfigPage from './pages/Admin/ScheduleConfigPage';
+import HolidayConfigPage from './pages/Admin/HolidayConfigPage';
+import MonthlyReportPage from './pages/Admin/MonthlyReportPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { ToastContainer } from 'react-toastify';
@@ -34,10 +37,13 @@ function App() {
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="attendance/manual" element={<ManualAttendancePage />} />
+              <Route path="schedules" element={<ScheduleConfigPage />} />
+              <Route path="holidays" element={<HolidayConfigPage />} />
               <Route path="students" element={<StudentList />} />
               <Route path="users" element={<UserList />} />
               <Route path="users/add" element={<UserForm />} />
               <Route path="reports" element={<Reports />} />
+              <Route path="reports/monthly" element={<MonthlyReportPage />} />
               <Route path="reports/subjects" element={<SubjectReportPage />} />
             </Route>
             {/* Print QR Route */}

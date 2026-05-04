@@ -8,9 +8,12 @@ const AdminLayout = () => {
     const menuItems = [
         { path: '/admin', label: 'Dashboard', icon: '📊' },
         { path: '/admin/attendance/manual', label: 'Carga Manual', icon: '📝' },
+        { path: '/admin/schedules', label: 'Horarios', icon: '📅' },
+        { path: '/admin/holidays', label: 'Feriados', icon: '🏖️' },
         { path: '/admin/students', label: 'Estudiantes', icon: '👥' },
         { path: '/admin/users', label: 'Usuarios', icon: '👤' },
         { path: '/admin/reports', label: 'Reportes', icon: '📈' },
+        { path: '/admin/reports/monthly', label: 'Planilla Mensual', icon: '📆' },
         { path: '/admin/reports/subjects', label: 'Reporte Materias', icon: '📚' },
         { path: '/', label: 'Modo Kiosco', icon: '🏪' },
     ];

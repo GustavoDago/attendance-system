@@ -13,7 +13,8 @@ import java.util.Optional;
 
 @Repository
 public interface CourseScheduleRepository extends JpaRepository<CourseSchedule, Long> {
-    Optional<CourseSchedule> findByCourseAndDayOfWeekAndGroupNumber(Course course, DayOfWeek dayOfWeek, Integer groupNumber);
+    List<CourseSchedule> findByCourseAndDayOfWeekAndGroupNumber(Course course, DayOfWeek dayOfWeek, Integer groupNumber);
+    List<CourseSchedule> findByCourseAndDayOfWeek(Course course, DayOfWeek dayOfWeek);
     
     @Query("SELECT cs FROM CourseSchedule cs WHERE cs.course = :course AND cs.dayOfWeek = :dayOfWeek " +
            "AND (cs.groupNumber = :groupNumber OR cs.groupNumber IS NULL) " +

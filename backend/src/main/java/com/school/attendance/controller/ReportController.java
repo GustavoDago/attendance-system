@@ -44,6 +44,14 @@ public class ReportController {
                 .build());
     }
 
+    @GetMapping("/monthly")
+    public ResponseEntity<com.school.attendance.dto.report.MonthlyReportDTO> getMonthlyReport(
+            @RequestParam Long courseId,
+            @RequestParam int year,
+            @RequestParam int month) {
+        return ResponseEntity.ok(reportService.generateMonthlyReport(courseId, year, month));
+    }
+
     @Data
     @Builder
     public static class InstitutionalReportResponse {

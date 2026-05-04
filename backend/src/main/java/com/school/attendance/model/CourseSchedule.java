@@ -30,5 +30,7 @@ public class CourseSchedule {
     @Column(nullable = false)
     private DayOfWeek dayOfWeek;
 
-    private Integer activityCount; // 1, 2 o 3 actividades en el día
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ActivityType activityType;
 }
