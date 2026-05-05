@@ -116,6 +116,9 @@
                         <extensions>true</extensions>
                         <configuration>
                             <imageName>attendance-backend</imageName>
+                            <metadataRepository>
+                                <enabled>true</enabled>
+                            </metadataRepository>
                             <buildArgs>
                                 <!--
                                     -march=compatibility: genera un binario compatible con CPUs antiguas

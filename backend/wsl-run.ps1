@@ -15,8 +15,9 @@ Write-Host "╚═════════════════════�
 Write-Host ""
 
 # Verificar que el binario exista en WSL
-$checkCmd = "if [ -f ~/$BINARY_NAME ]; then echo 'yes'; else echo 'no'; fi"
+$checkCmd = "if [ -f ~/" + $BINARY_NAME + " ]; then echo 'yes'; else echo 'no'; fi"
 $binaryExists = wsl -d $WSL_DISTRO -- bash -c $checkCmd
+
 if ($binaryExists -notmatch "yes") {
     Write-Error "El binario '~/$BINARY_NAME' no existe en WSL."
     Write-Host "  Compilá primero con: .\wsl-deploy.ps1"
@@ -30,4 +31,5 @@ Write-Host "  URL: http://localhost:$APP_PORT"
 Write-Host ""
 
 # Ejecutar el binario
-wsl -d $WSL_DISTRO -- bash -c "export SERVER_PORT=$APP_PORT; export SPRING_PROFILES_ACTIVE=default; ~/$BINARY_NAME"
+$runCmd = "export SERVER_PORT=$APP_PORT; export SPRING_PROFILES_ACTIVE=default; ~/$BINARY_NAME"
+wsl -d $WSL_DISTRO -- bash -c $runCmd
