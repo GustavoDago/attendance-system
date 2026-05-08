@@ -171,10 +171,15 @@ const ManualAttendancePage = () => {
         switch (status) {
             case 'PRESENTE': return 'Presente';
             case 'AUSENTE': return 'Ausente';
+            case 'AUSENTE_J': return 'Ausente Justif.';
             case 'TARDANZA_1_4': return 'Tardanza 1/4';
+            case 'TARDANZA_1_4_J': return 'Tardanza 1/4 Justif.';
             case 'TARDANZA_1_2': return 'Tardanza 1/2';
-            case 'RETIRO_ANTICIPADO': return 'Retiro Anticipado';
-            case 'JUSTIFICADA': return 'Justificada';
+            case 'TARDANZA_1_2_J': return 'Tardanza 1/2 Justif.';
+            case 'RETIRO_1_2': return 'Retiro 1/2';
+            case 'RETIRO_1_2_J': return 'Retiro 1/2 Justif.';
+            case 'RETIRO_1_4': return 'Retiro 1/4';
+            case 'RETIRO_1_4_J': return 'Retiro 1/4 Justif.';
             case 'NO_APLICA': return 'No Aplica';
             default: return status;
         }
@@ -280,10 +285,15 @@ const ManualAttendancePage = () => {
                                                             <>
                                                                 <option value="PRESENTE" title="Presente">P</option>
                                                                 <option value="AUSENTE" title="Ausente">A</option>
-                                                                <option value="TARDANZA_1_4" title="Tardanza 1/4">T 1/4</option>
-                                                                <option value="TARDANZA_1_2" title="Tardanza 1/2">T 1/2</option>
-                                                                <option value="RETIRO_ANTICIPADO" title="Retiro Anticipado">R 1/2</option>
-                                                                <option value="JUSTIFICADA" title="Ausente Justificada">AJ</option>
+                                                                <option value="AUSENTE_J" title="Ausente Justificada">AJ</option>
+                                                                <option value="TARDANZA_1_4" title="Tardanza 1/4">T¼</option>
+                                                                <option value="TARDANZA_1_4_J" title="Tardanza 1/4 Justificada">TJ¼</option>
+                                                                <option value="TARDANZA_1_2" title="Tardanza 1/2">T½</option>
+                                                                <option value="TARDANZA_1_2_J" title="Tardanza 1/2 Justificada">TJ½</option>
+                                                                <option value="RETIRO_1_2" title="Retiro 1/2">R½</option>
+                                                                <option value="RETIRO_1_2_J" title="Retiro 1/2 Justificado">RJ½</option>
+                                                                <option value="RETIRO_1_4" title="Retiro 1/4">R¼</option>
+                                                                <option value="RETIRO_1_4_J" title="Retiro 1/4 Justificado">RJ¼</option>
                                                                 <option value="NO_APLICA" title="No Aplica">N/A</option>
                                                             </>
                                                         )}
@@ -311,7 +321,15 @@ const getStatusStyle = (status) => {
     switch (status) {
         case 'PRESENTE': return { backgroundColor: '#e8f5e9', color: '#2e7d32' };
         case 'AUSENTE': return { backgroundColor: '#ffebee', color: '#c62828' };
-        case 'JUSTIFICADA': return { backgroundColor: '#e3f2fd', color: '#1565c0' };
+        case 'AUSENTE_J': return { backgroundColor: '#e3f2fd', color: '#1565c0' };
+        case 'TARDANZA_1_4': 
+        case 'TARDANZA_1_2': 
+        case 'RETIRO_1_2': 
+        case 'RETIRO_1_4': return { backgroundColor: '#fff3e0', color: '#ef6c00' };
+        case 'TARDANZA_1_4_J': 
+        case 'TARDANZA_1_2_J': 
+        case 'RETIRO_1_2_J': 
+        case 'RETIRO_1_4_J': return { backgroundColor: '#e8eaf6', color: '#283593' };
         case 'NO_APLICA': return { backgroundColor: '#f3f4f6', color: '#6b7280' };
         default: return { backgroundColor: '#fff3e0', color: '#ef6c00' };
     }

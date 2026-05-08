@@ -70,21 +70,38 @@ public class ActivityAttendanceController {
     }
 
     private Double calculateAbsenceWeight(ActivityType type, AttendanceStatus status) {
-        if (status == AttendanceStatus.PRESENTE) return 0.0;
+        if (status == AttendanceStatus.PRESENTE || status == AttendanceStatus.NO_APLICA) return 0.0;
         
-        double weight = 0.0;
-        if (status == AttendanceStatus.AUSENTE || status == AttendanceStatus.JUSTIFICADA) {
-            weight = switch (type) {
+        // Ausente (justificada o no) — el peso depende del tipo de actividad
+        if (status == AttendanceStatus.AUSENTE || status == AttendanceStatus.AUSENTE_J) {
+            return switch (type) {
                 case AULA -> 1.0;
                 case TALLER, EDUCACION_FISICA -> 0.5;
                 default -> 0.0;
             };
-        } else if (status == AttendanceStatus.TARDANZA_1_4) {
-            weight = 0.25;
-        } else if (status == AttendanceStatus.TARDANZA_1_2 || status == AttendanceStatus.RETIRO_ANTICIPADO) {
-            weight = 0.5;
         }
-        return weight;
+        
+        // Tardanza 1/4 (justificada o no)
+        if (status == AttendanceStatus.TARDANZA_1_4 || status == AttendanceStatus.TARDANZA_1_4_J) {
+            return 0.25;
+        }
+        
+        // Tardanza 1/2 (justificada o no)
+        if (status == AttendanceStatus.TARDANZA_1_2 || status == AttendanceStatus.TARDANZA_1_2_J) {
+            return 0.5;
+        }
+        
+        // Retiro 1/2 (justificado o no)
+        if (status == AttendanceStatus.RETIRO_1_2 || status == AttendanceStatus.RETIRO_1_2_J) {
+            return 0.5;
+        }
+        
+        // Retiro 1/4 (justificado o no)
+        if (status == AttendanceStatus.RETIRO_1_4 || status == AttendanceStatus.RETIRO_1_4_J) {
+            return 0.25;
+        }
+        
+        return 0.0;
     }
 
     @Data

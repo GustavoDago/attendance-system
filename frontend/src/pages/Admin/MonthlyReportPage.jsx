@@ -53,7 +53,7 @@ const MonthlyReportPage = () => {
     const handleExportCSV = () => {
         if (!reportData || !reportData.students) return;
 
-        const { daysInMonth, students } = reportData;
+        const { daysInMonth, students, dailyTotals } = reportData;
         const daysArray = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
         const csvData = students.map(student => {
@@ -67,11 +67,30 @@ const MonthlyReportPage = () => {
                 row[day] = record ? record.statusLabel : '';
             });
 
-            row['Total Mensual'] = student.monthlyTotal.toFixed(1);
-            row['Total Anual'] = student.annualTotal.toFixed(1);
+            row['Faltas Mes'] = student.monthlyTotal.toFixed(1);
+            row['Faltas Año'] = student.annualTotal.toFixed(1);
 
             return row;
         });
+
+        // Add daily totals row
+        if (dailyTotals) {
+            const totalsRow = {
+                'N°': '',
+                'Alumno': 'TOTALES'
+            };
+            daysArray.forEach(day => {
+                const dt = dailyTotals[day];
+                if (dt && dt.totalStudents > 0) {
+                    totalsRow[day] = `P:${dt.presentCount} A:${dt.absentCount}`;
+                } else {
+                    totalsRow[day] = '';
+                }
+            });
+            totalsRow['Faltas Mes'] = '';
+            totalsRow['Faltas Año'] = '';
+            csvData.push(totalsRow);
+        }
 
         const csv = Papa.unparse(csvData);
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -95,10 +114,14 @@ const MonthlyReportPage = () => {
 
     const getCellColor = (label) => {
         if (label === 'P') return '#dcfce7'; // Light green
-        if (label === 'A' || label === '1.0') return '#fee2e2'; // Light red
-        if (label === '0.5' || label === '0.25') return '#fef3c7'; // Light orange
+        if (label === 'A') return '#fee2e2'; // Light red
+        if (label === 'AJ') return '#dbeafe'; // Light blue (justified)
+        if (label === 'T½' || label === 'T¼' || label === 'R½' || label === 'R¼') return '#fef3c7'; // Light orange
+        if (label === 'TJ½' || label === 'TJ¼' || label === 'RJ½' || label === 'RJ¼') return '#e0e7ff'; // Light indigo (justified)
         if (label === 'H') return '#e0f2fe'; // Light blue
         if (label === '-') return '#f3f4f6'; // Gray
+        // Fallback for numeric values
+        if (label === '0.5' || label === '0.25' || label === '1.0') return '#fef3c7';
         return 'transparent';
     };
 
@@ -215,6 +238,36 @@ const MonthlyReportPage = () => {
                                     ))
                                 )}
                             </tbody>
+                            {reportData.dailyTotals && reportData.students.length > 0 && (
+                                <tfoot>
+                                    <tr style={styles.totalsRow}>
+                                        <td style={{...styles.tdTotalsLabel, ...styles.stickyLeft}}>
+                                            <strong>TOTALES</strong>
+                                        </td>
+                                        {Array.from({ length: reportData.daysInMonth }, (_, i) => i + 1).map(day => {
+                                            const dt = reportData.dailyTotals[day];
+                                            if (!dt || dt.totalStudents === 0) {
+                                                return <td key={day} style={styles.tdTotalsEmpty}>-</td>;
+                                            }
+                                            return (
+                                                <td key={day} style={styles.tdTotalsDay}>
+                                                    <div style={styles.totalsPresent}>{dt.presentCount}</div>
+                                                    <div style={styles.totalsAbsent}>{dt.absentCount}</div>
+                                                </td>
+                                            );
+                                        })}
+                                        <td style={styles.tdTotalsEmpty}></td>
+                                        <td style={styles.tdTotalsEmpty}></td>
+                                    </tr>
+                                    <tr>
+                                        <td colSpan={reportData.daysInMonth + 3} style={styles.totalsLegend}>
+                                            <span style={{color: '#16a34a', fontWeight: '600'}}>■ Presentes</span>
+                                            {' / '}
+                                            <span style={{color: '#dc2626', fontWeight: '600'}}>■ Ausentes/Faltas</span>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            )}
                         </table>
                     </div>
                 </div>
@@ -339,6 +392,46 @@ const styles = {
         textAlign: 'center',
         color: '#9ca3af',
         fontStyle: 'italic'
+    },
+    // Daily totals row styles
+    totalsRow: {
+        borderTop: '3px solid #6366f1',
+        backgroundColor: '#f8fafc'
+    },
+    tdTotalsLabel: {
+        padding: '12px',
+        fontWeight: 'bold',
+        color: '#4338ca',
+        backgroundColor: '#f8fafc',
+        whiteSpace: 'nowrap'
+    },
+    tdTotalsDay: {
+        padding: '4px 6px',
+        textAlign: 'center',
+        borderRight: '1px solid #e5e7eb',
+        fontSize: '0.75rem',
+        lineHeight: '1.2'
+    },
+    tdTotalsEmpty: {
+        padding: '8px',
+        textAlign: 'center',
+        borderRight: '1px solid #f3f4f6',
+        color: '#d1d5db'
+    },
+    totalsPresent: {
+        color: '#16a34a',
+        fontWeight: '700'
+    },
+    totalsAbsent: {
+        color: '#dc2626',
+        fontWeight: '700'
+    },
+    totalsLegend: {
+        padding: '8px 12px',
+        fontSize: '0.75rem',
+        color: '#6b7280',
+        textAlign: 'left',
+        backgroundColor: '#f8fafc'
     }
 };
 

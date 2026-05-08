@@ -17,6 +17,10 @@
 *.swp
 *.swo
 
+# Release artifacts
+/release/
+*.zip
+
 # OS
 .DS_Store
 Thumbs.db

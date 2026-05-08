@@ -1,5 +1,6 @@
 package com.school.attendance.service;
 
+import com.school.attendance.dto.report.DailyCourseSummaryDTO;
 import com.school.attendance.model.*;
 import com.school.attendance.repository.ActivityAttendanceRepository;
 import com.school.attendance.repository.CourseScheduleRepository;
@@ -37,21 +38,38 @@ public class AttendanceReportService {
 
     /**
      * Calcula el peso de un registro individual basado en la normativa Res. 1650/2024.
+     * Los estados justificados (_J) cuentan con el mismo peso que los injustificados.
      */
     public double calculateRecordWeight(ActivityAttendance record) {
-        if (record.getStatus() == AttendanceStatus.PRESENTE || record.getStatus() == AttendanceStatus.JUSTIFICADA) {
+        AttendanceStatus status = record.getStatus();
+
+        // Presente y No Aplica no generan falta
+        if (status.isPresent()) {
             return 0.0;
         }
 
-        if (record.getStatus() == AttendanceStatus.TARDANZA_1_4) {
+        // Tardanza 1/4 (justificada o no)
+        if (status == AttendanceStatus.TARDANZA_1_4 || status == AttendanceStatus.TARDANZA_1_4_J) {
             return 0.25;
         }
 
-        if (record.getStatus() == AttendanceStatus.TARDANZA_1_2 || record.getStatus() == AttendanceStatus.RETIRO_ANTICIPADO) {
+        // Tardanza 1/2 (justificada o no)
+        if (status == AttendanceStatus.TARDANZA_1_2 || status == AttendanceStatus.TARDANZA_1_2_J) {
             return 0.50;
         }
 
-        if (record.getStatus() == AttendanceStatus.AUSENTE) {
+        // Retiro 1/2 (justificado o no)
+        if (status == AttendanceStatus.RETIRO_1_2 || status == AttendanceStatus.RETIRO_1_2_J) {
+            return 0.50;
+        }
+
+        // Retiro 1/4 (justificado o no)
+        if (status == AttendanceStatus.RETIRO_1_4 || status == AttendanceStatus.RETIRO_1_4_J) {
+            return 0.25;
+        }
+
+        // Ausente (justificada o no) — peso depende del turno/actividades del día
+        if (status == AttendanceStatus.AUSENTE || status == AttendanceStatus.AUSENTE_J) {
             // Obtener configuración del día para el curso y grupo del alumno
             StudentCourse studentCourse = record.getStudent().getStudentCourses().get(0);
             Course course = studentCourse.getCourse();
@@ -85,7 +103,7 @@ public class AttendanceReportService {
                                 list -> {
                                     long totalClasses = list.size();
                                     long presents = list.stream()
-                                            .filter(r -> r.getStatus() == AttendanceStatus.PRESENTE || r.getStatus() == AttendanceStatus.JUSTIFICADA)
+                                            .filter(r -> r.getStatus().isPresent())
                                             .count();
                                     return totalClasses > 0 ? (double) presents / totalClasses * 100 : 100.0;
                                 }
@@ -107,6 +125,9 @@ public class AttendanceReportService {
                 .collect(Collectors.toList());
 
         List<Holiday> holidays = holidayRepository.findAll();
+
+        // Track daily totals for the whole course
+        Map<Integer, DailyCourseSummaryDTO> dailyTotals = new java.util.HashMap<>();
 
         List<com.school.attendance.dto.report.StudentMonthlyReportDTO> studentReports = students.stream().map(student -> {
             Map<Integer, com.school.attendance.dto.report.DailySummaryDTO> dailyRecords = new java.util.HashMap<>();
@@ -136,13 +157,18 @@ public class AttendanceReportService {
                     dailyAbsence += calculateRecordWeight(record);
                 }
 
+                // Build the label using the status label from the first significant record
                 String label;
                 if (dailyAbsence == 0.0) {
                     label = "P";
-                } else if (dailyAbsence == 1.0) {
-                    label = "A";
                 } else {
-                    label = String.valueOf(dailyAbsence);
+                    // Find the most significant status for display
+                    AttendanceStatus mainStatus = dailyAttendances.stream()
+                            .map(ActivityAttendance::getStatus)
+                            .filter(s -> !s.isPresent())
+                            .findFirst()
+                            .orElse(AttendanceStatus.PRESENTE);
+                    label = mainStatus.getLabel();
                 }
 
                 dailyRecords.put(day, new com.school.attendance.dto.report.DailySummaryDTO(label, dailyAbsence));
@@ -168,6 +194,46 @@ public class AttendanceReportService {
                     .build();
         }).collect(Collectors.toList());
 
+        // Calculate daily totals (present/absent counts per day)
+        for (int day = 1; day <= daysInMonth; day++) {
+            LocalDate currentDate = LocalDate.of(year, month, day);
+            
+            if (currentDate.getDayOfWeek() == DayOfWeek.SATURDAY || currentDate.getDayOfWeek() == DayOfWeek.SUNDAY) {
+                dailyTotals.put(day, DailyCourseSummaryDTO.builder()
+                        .presentCount(0).absentCount(0).totalStudents(0).build());
+                continue;
+            }
+            
+            boolean isHoliday = holidays.stream().anyMatch(h -> h.getDate().equals(currentDate));
+            if (isHoliday) {
+                dailyTotals.put(day, DailyCourseSummaryDTO.builder()
+                        .presentCount(0).absentCount(0).totalStudents(0).build());
+                continue;
+            }
+
+            int presentCount = 0;
+            int absentCount = 0;
+            
+            for (com.school.attendance.dto.report.StudentMonthlyReportDTO studentReport : studentReports) {
+                com.school.attendance.dto.report.DailySummaryDTO dailySummary = studentReport.getDailyRecords().get(day);
+                if (dailySummary == null || "-".equals(dailySummary.getStatusLabel()) || "H".equals(dailySummary.getStatusLabel())) {
+                    continue;
+                }
+                
+                if ("P".equals(dailySummary.getStatusLabel())) {
+                    presentCount++;
+                } else {
+                    absentCount++;
+                }
+            }
+            
+            dailyTotals.put(day, DailyCourseSummaryDTO.builder()
+                    .presentCount(presentCount)
+                    .absentCount(absentCount)
+                    .totalStudents(presentCount + absentCount)
+                    .build());
+        }
+
         return com.school.attendance.dto.report.MonthlyReportDTO.builder()
                 .courseId(course.getId())
                 .courseName(course.getYearLabel() + " " + course.getDivision() + " " + course.getShift())
@@ -175,6 +241,7 @@ public class AttendanceReportService {
                 .month(month)
                 .daysInMonth(daysInMonth)
                 .students(studentReports)
+                .dailyTotals(dailyTotals)
                 .build();
     }
 }
