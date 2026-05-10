@@ -6,7 +6,7 @@ const AdminLayout = () => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
-    const { logout } = useAuth();
+    const { logout, user } = useAuth();
 
     const handleLogout = () => {
         logout();
@@ -33,7 +33,15 @@ const AdminLayout = () => {
                 width: isCollapsed ? '70px' : '260px',
             }}>
                 <div style={styles.header}>
-                    {!isCollapsed && <h2 style={styles.title}>Admin Panel</h2>}
+                    {!isCollapsed && (
+                        <div style={styles.headerText}>
+                            <h2 style={styles.title}>Admin Panel</h2>
+                            <div style={styles.userInfo}>
+                                <span style={styles.userLogin}>@{user?.username || user?.dni}</span>
+                                <span style={styles.userRole}>{user?.role}</span>
+                            </div>
+                        </div>
+                    )}
                     <button 
                         onClick={() => setIsCollapsed(!isCollapsed)} 
                         style={styles.toggleBtn}
@@ -131,6 +139,27 @@ const styles = {
         fontSize: '1.2rem',
         transition: 'background 0.2s',
         flexShrink: 0,
+    },
+    headerText: {
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+    },
+    userInfo: {
+        display: 'flex',
+        flexDirection: 'column',
+        marginTop: '4px',
+    },
+    userLogin: {
+        fontSize: '0.85rem',
+        color: '#5d5fef',
+        fontWeight: '600',
+    },
+    userRole: {
+        fontSize: '0.7rem',
+        color: '#a2a3b7',
+        textTransform: 'uppercase',
+        letterSpacing: '0.05em',
     },
     nav: {
         listStyle: 'none',

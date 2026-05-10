@@ -9,6 +9,10 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
+
+import javax.sql.DataSource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +31,7 @@ public class DataSeeder implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
     private final ExcelImportService excelImportService;
     private final JdbcTemplate jdbcTemplate;
+    private final DataSource dataSource;
 
     @Override
     public void run(String... args) throws Exception {
@@ -72,51 +77,17 @@ public class DataSeeder implements CommandLineRunner {
                 .firstName("Super")
                 .lastName("Admin")
                 .dni("admin")
+                .username("admin")
                 .password(passwordEncoder.encode("admin"))
                 .role(Role.PRINCIPAL)
                 .build();
         userRepository.save(admin);
-
-        // 4. Teachers (one for each division, roughly)
-        Random random = new Random();
-        for (int i = 0; i < courses.size(); i++) {
-            List<Subject> teacherSubjects = new ArrayList<>();
-            teacherSubjects.add(subjects.get(random.nextInt(subjects.size())));
-            
-            Teacher teacher = Teacher.builder()
-                    .firstName("Profesor")
-                    .lastName(courses.get(i).getYearLabel() + " " + courses.get(i).getDivision())
-                    .dni("prof" + (i + 1))
-                    .password(passwordEncoder.encode("prof" + (i + 1)))
-                    .role(Role.TEACHER)
-                    .specialty("Docente General")
-                    .subjects(teacherSubjects)
-                    .build();
-            userRepository.save(teacher);
-        }
 
         // 5. Import students from Excel (solo si no hay estudiantes ya cargados)
         if (studentRepository.count() == 0) {
             excelImportService.importStudentsFromExcel();
         } else {
             log.info("Ya existen estudiantes en la base de datos. Saltando importación de Excel.");
-        }
-
-        // 6. Preceptors (one per 2 courses)
-        for (int i = 1; i <= 5; i++) {
-            List<Course> managedCourses = new ArrayList<>();
-            managedCourses.add(courses.get((i - 1) * 2));
-            managedCourses.add(courses.get((i - 1) * 2 + 1));
-
-            Preceptor preceptor = Preceptor.builder()
-                    .firstName("Preceptor")
-                    .lastName("Grupo " + i)
-                    .dni("prec" + i)
-                    .password(passwordEncoder.encode("prec" + i))
-                    .role(Role.PRECEPTOR)
-                    .assignedCourses(managedCourses)
-                    .build();
-            userRepository.save(preceptor);
         }
 
         // 7. Seed Course Schedules (Res. 1650/2024 logic with Groups)
@@ -168,6 +139,19 @@ public class DataSeeder implements CommandLineRunner {
                     }
                 }
             }
+        }
+
+        // 8. Load Holidays
+        try {
+            FileSystemResource holidayResource = new FileSystemResource("scripts/holidays_2026.sql");
+            if (holidayResource.exists()) {
+                ScriptUtils.executeSqlScript(dataSource.getConnection(), holidayResource);
+                log.info("Feriados cargados exitosamente desde holidays_2026.sql");
+            } else {
+                log.warn("Archivo scripts/holidays_2026.sql no encontrado. No se cargaron feriados adicionales.");
+            }
+        } catch (Exception e) {
+            log.error("Error al ejecutar el script de feriados", e);
         }
 
         log.info("Data setup complete. Users: {}", userRepository.count());

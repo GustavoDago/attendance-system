@@ -40,7 +40,7 @@ const KioskHome = () => {
       {isDesktop && (
         <div style={desktopStyles.leftPanel}>
           <div style={desktopStyles.infoBox}>
-            <h1 style={desktopStyles.schoolName}>COLEGIO INSTITUTO CENTRAL</h1>
+            <h1 style={desktopStyles.schoolName}>ESCUELA DE EDUCACIÓN SECUNDARIA TÉCNICA Nº 3 RAMALLO</h1>
             <p style={desktopStyles.schoolSubtitle}>Sistema de Asistencia</p>
             <div style={desktopStyles.divider}></div>
             <p style={desktopStyles.instructions}>
@@ -57,7 +57,7 @@ const KioskHome = () => {
       <div style={currentStyles.interactionPanel}>
         {!isDesktop && (
           <div style={mobileStyles.header}>
-            <h1 style={mobileStyles.headerTitle}>INSTITUTO CENTRAL</h1>
+            <h1 style={mobileStyles.headerTitle}>E.E.S.T. Nº 3 RAMALLO</h1>
             <p style={mobileStyles.headerSubtitle}>Control de Asistencia</p>
           </div>
         )}
@@ -117,7 +117,7 @@ const desktopStyles = {
     textAlign: 'center',
   },
   schoolName: {
-    fontSize: '3rem',
+    fontSize: '2.2rem',
     margin: '0 0 10px 0',
     lineHeight: '1.2',
   },
