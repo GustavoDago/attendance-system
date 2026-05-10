@@ -19,6 +19,18 @@ const UserList = () => {
         }
     };
 
+    const handleDelete = async (id) => {
+        if (window.confirm('¿Está seguro de que desea eliminar este usuario?')) {
+            try {
+                await axios.delete(`/api/users/${id}`);
+                setUsers(users.filter(user => user.id !== id));
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                alert('No se pudo eliminar el usuario.');
+            }
+        }
+    };
+
     return (
         <div>
             <h1>Gestión de Usuarios</h1>
@@ -33,6 +45,7 @@ const UserList = () => {
                         <th>Nombre</th>
                         <th>Apellido</th>
                         <th>DNI</th>
+                        <th>Usuario (Login)</th>
                         <th>Rol</th>
                         <th>Acciones</th>
                     </tr>
@@ -44,11 +57,18 @@ const UserList = () => {
                             <td>{user.firstName}</td>
                             <td>{user.lastName}</td>
                             <td>{user.dni}</td>
+                            <td>{user.username || user.dni}</td>
                             <td>{user.role}</td>
-                            <td>
+                            <td style={{ display: 'flex', gap: '10px' }}>
                                 <Link to={`/admin/qr/${user.id}`} target="_blank" style={styles.link}>
                                     Imprimir QR
                                 </Link>
+                                <button 
+                                    onClick={() => handleDelete(user.id)}
+                                    style={styles.deleteButton}
+                                >
+                                    Eliminar
+                                </button>
                             </td>
                         </tr>
                     ))}
@@ -88,6 +108,14 @@ const styles = {
         color: '#007bff',
         textDecoration: 'none',
     },
+    deleteButton: {
+        backgroundColor: '#dc3545',
+        color: 'white',
+        border: 'none',
+        borderRadius: '3px',
+        padding: '5px 10px',
+        cursor: 'pointer',
+    }
 };
 
 export default UserList;

@@ -73,7 +73,7 @@ if (-not $JAR_FILE) {
 
 Copy-Item $JAR_FILE.FullName (Join-Path $RELEASE_DIR "attendance-system.jar")
 
-# Crear el script de inicio para la notebook (.bat)
+# Crear el script de inicio para la notebook (.bat) sin BOM para que CMD lo reconozca
 $START_SCRIPT = Join-Path $RELEASE_DIR "iniciar-sistema.bat"
 $batContent = @"
 @echo off
@@ -92,9 +92,10 @@ java -Xmx512m -jar attendance-system.jar --spring.profiles.active=notebook
 pause
 "@
 
-Set-Content -Path $START_SCRIPT -Value $batContent -Encoding UTF8
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+[System.IO.File]::WriteAllText($START_SCRIPT, $batContent, $utf8NoBom)
 
-# Crear archivo README en el release
+# Crear archivo README en el release sin BOM
 $README_SCRIPT = Join-Path $RELEASE_DIR "LEER-PRIMERO.txt"
 $readmeContent = @"
 Instrucciones de Instalación:
@@ -103,7 +104,7 @@ Instrucciones de Instalación:
 3. El sistema se abrirá automáticamente en tu navegador por defecto.
 4. Los datos se guardarán automáticamente en una carpeta llamada 'data' que aparecerá aquí. Haz copias de seguridad de esa carpeta periódicamente.
 "@
-Set-Content -Path $README_SCRIPT -Value $readmeContent -Encoding UTF8
+[System.IO.File]::WriteAllText($README_SCRIPT, $readmeContent, $utf8NoBom)
 
 # Comprimir la carpeta de release
 Write-Host "Creando archivo .zip..."

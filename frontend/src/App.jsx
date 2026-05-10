@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import KioskHome from './pages/KioskHome';
 import Scanner from './pages/Scanner';
 import AdminLayout from './pages/Admin/AdminLayout';
@@ -26,8 +26,11 @@ function App() {
       <Router>
         <ToastContainer position="top-right" autoClose={3000} />
         <Routes>
+          {/* Redirect root to login (or admin if authenticated) */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+
           {/* Kiosk Routes */}
-          <Route path="/" element={<KioskHome />} />
+          <Route path="/kiosk" element={<KioskHome />} />
           <Route path="/scan/:type" element={<Scanner />} />
 
           {/* Public Admin Route */}

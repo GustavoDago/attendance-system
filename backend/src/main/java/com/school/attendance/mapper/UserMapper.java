@@ -20,6 +20,7 @@ public class UserMapper {
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .dni(user.getDni())
+                .username(user.getUsername())
                 .role(user.getRole());
 
         if (user instanceof Teacher teacher) {

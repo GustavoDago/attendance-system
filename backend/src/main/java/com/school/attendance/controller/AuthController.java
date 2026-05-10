@@ -27,14 +27,14 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest request) {
         try {
-            System.out.println("Login attempt for DNI: " + request.getDni());
+            System.out.println("Login attempt for username: " + request.getUsername());
             
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
-                            request.getDni(),
+                            request.getUsername(),
                             request.getPassword()));
  
-            User user = userRepository.findByDni(request.getDni())
+            User user = userRepository.findByUsername(request.getUsername())
                     .orElseThrow(() -> new RuntimeException("User not found"));
  
             String jwtToken = jwtService.generateToken(user);
@@ -47,7 +47,7 @@ public class AuthController {
                     .role(user.getRole())
                     .build();
  
-            System.out.println("Login successful for DNI: " + request.getDni());
+            System.out.println("Login successful for username: " + request.getUsername());
             return ResponseEntity.ok(AuthResponse.builder()
                     .token(jwtToken)
                     .user(userDTO)

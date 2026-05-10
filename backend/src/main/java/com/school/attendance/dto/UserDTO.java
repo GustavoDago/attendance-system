@@ -17,6 +17,7 @@ public class UserDTO {
     private String firstName;
     private String lastName;
     private String dni;
+    private String username;
     private Role role;
 
     // Teacher fields

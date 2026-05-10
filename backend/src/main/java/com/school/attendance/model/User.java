@@ -31,6 +31,9 @@ public class User implements UserDetails {
     private String lastName;
 
     @Column(unique = true)
+    private String username;
+
+    @Column(unique = true)
     private String dni;
 
     private String password;
@@ -45,7 +48,7 @@ public class User implements UserDetails {
 
     @Override
     public String getUsername() {
-        return dni;
+        return username;
     }
 
     @Override

@@ -181,19 +181,16 @@ public class DataSeeder implements CommandLineRunner {
      */
     private void migrateOldAttendanceStatuses() {
         try {
-            int updatedRetiro = jdbcTemplate.update(
-                    "UPDATE activity_attendance SET status = 'RETIRO_1_2' WHERE status = 'RETIRO_ANTICIPADO'");
-            if (updatedRetiro > 0) {
-                log.info("Migrados {} registros de RETIRO_ANTICIPADO → RETIRO_1_2", updatedRetiro);
-            }
+            // Forzamos la columna a VARCHAR para eliminar restricciones de ENUM antiguas en H2.
+            // Esto permite guardar los nuevos valores aunque el esquema no se haya actualizado totalmente.
+            jdbcTemplate.execute("ALTER TABLE activity_attendance ALTER COLUMN status VARCHAR(255)");
 
-            int updatedJustificada = jdbcTemplate.update(
-                    "UPDATE activity_attendance SET status = 'AUSENTE_J' WHERE status = 'JUSTIFICADA'");
-            if (updatedJustificada > 0) {
-                log.info("Migrados {} registros de JUSTIFICADA → AUSENTE_J", updatedJustificada);
-            }
+            // Intentamos migrar valores antiguos usando CAST para mayor seguridad
+            jdbcTemplate.execute("UPDATE activity_attendance SET status = 'RETIRO_1_2' WHERE CAST(status AS VARCHAR) = 'RETIRO_ANTICIPADO'");
+            jdbcTemplate.execute("UPDATE activity_attendance SET status = 'AUSENTE_J' WHERE CAST(status AS VARCHAR) = 'JUSTIFICADA'");
         } catch (Exception e) {
-            log.warn("No se pudo ejecutar la migración de estados (tabla puede no existir aún): {}", e.getMessage());
+            // Es normal que falle si la tabla no existe o si los valores ya no están presentes
+            log.debug("Migración de estados antiguos saltada o no necesaria.");
         }
     }
 }

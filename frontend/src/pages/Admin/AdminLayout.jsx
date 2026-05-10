@@ -1,9 +1,17 @@
 import React, { useState } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 const AdminLayout = () => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const location = useLocation();
+    const navigate = useNavigate();
+    const { logout } = useAuth();
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
 
     const menuItems = [
         { path: '/admin', label: 'Dashboard', icon: '📊' },
@@ -56,6 +64,20 @@ const AdminLayout = () => {
                         );
                     })}
                 </ul>
+                <div style={styles.footer}>
+                    <button 
+                        onClick={handleLogout} 
+                        style={{
+                            ...styles.logoutBtn,
+                            justifyContent: isCollapsed ? 'center' : 'flex-start',
+                            padding: isCollapsed ? '12px 0' : '12px 15px',
+                        }}
+                        title="Cerrar Sesión"
+                    >
+                        <span style={{...styles.icon, marginRight: isCollapsed ? '0' : '12px'}}>🚪</span>
+                        {!isCollapsed && <span style={styles.label}>Cerrar Sesión</span>}
+                    </button>
+                </div>
             </div>
             <div style={styles.content}>
                 <Outlet />
@@ -114,7 +136,6 @@ const styles = {
         listStyle: 'none',
         padding: '15px 10px',
         margin: 0,
-        flex: 1,
     },
     navItem: {
         marginBottom: '4px',
@@ -147,6 +168,25 @@ const styles = {
         padding: '30px',
         backgroundColor: '#f8f9fa',
         overflowY: 'auto',
+    },
+    footer: {
+        padding: '15px 10px',
+        borderTop: '1px solid rgba(255,255,255,0.05)',
+        marginTop: '10px',
+    },
+    logoutBtn: {
+        display: 'flex',
+        alignItems: 'center',
+        width: '100%',
+        background: 'transparent',
+        border: 'none',
+        color: '#ff4d4f',
+        borderRadius: '10px',
+        fontSize: '0.95rem',
+        fontWeight: '500',
+        transition: 'all 0.2s',
+        whiteSpace: 'nowrap',
+        cursor: 'pointer',
     },
 };
 

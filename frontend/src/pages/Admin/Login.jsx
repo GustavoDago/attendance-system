@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
 
 const Login = () => {
-    const [dni, setDni] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const { login } = useAuth();
     const navigate = useNavigate();
@@ -14,7 +14,7 @@ const Login = () => {
         e.preventDefault();
         try {
             const response = await axios.post('/api/auth/login', {
-                dni,
+                username,
                 password
             });
             login(response.data.token, response.data.user);
@@ -33,9 +33,9 @@ const Login = () => {
                     <input
                         style={styles.input}
                         type="text"
-                        placeholder="DNI"
-                        value={dni}
-                        onChange={(e) => setDni(e.target.value)}
+                        placeholder="Usuario"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
                         required
                     />
                     <input
@@ -47,7 +47,7 @@ const Login = () => {
                         required
                     />
                     <button style={styles.button} type="submit">Iniciar Sesión</button>
-                    <button style={styles.backButton} type="button" onClick={() => navigate('/')}>Volver al Kiosco</button>
+                    <button style={styles.backButton} type="button" onClick={() => navigate('/kiosk')}>Volver al Kiosco</button>
                 </form>
             </div>
         </div>

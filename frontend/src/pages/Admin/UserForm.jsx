@@ -9,6 +9,7 @@ const UserForm = () => {
         firstName: '',
         lastName: '',
         dni: '',
+        username: '',
         role: 'STUDENT'
     });
     const [loading, setLoading] = useState(false);
@@ -49,12 +50,17 @@ const UserForm = () => {
                     <input style={styles.input} name="dni" value={formData.dni} onChange={handleChange} required />
                 </div>
                 <div style={styles.group}>
+                    <label style={styles.label}>Usuario (Login):</label>
+                    <input style={styles.input} name="username" value={formData.username} onChange={handleChange} required />
+                </div>
+                <div style={styles.group}>
                     <label style={styles.label}>Rol:</label>
                     <select style={styles.input} name="role" value={formData.role} onChange={handleChange}>
                         <option value="STUDENT">Estudiante</option>
                         <option value="TEACHER">Profesor</option>
                         <option value="STAFF">Staff</option>
                         <option value="PRINCIPAL">Directivo</option>
+                        <option value="PRECEPTOR">Preceptor/a</option>
                     </select>
                 </div>
                 <button type="submit" disabled={loading} style={styles.button}>
