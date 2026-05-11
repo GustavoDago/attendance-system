@@ -7,11 +7,13 @@ import { toast } from 'react-toastify';
 const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setIsLoading(true);
         try {
             const response = await axios.post('/api/auth/login', {
                 username,
@@ -22,6 +24,8 @@ const Login = () => {
             navigate('/admin');
         } catch (error) {
             toast.error(error.response?.data?.message || 'Error al iniciar sesión');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -42,30 +46,44 @@ const Login = () => {
                     
                     <form onSubmit={handleSubmit} style={styles.form}>
                         <div style={styles.inputGroup}>
-                            <label style={styles.label}>Usuario</label>
+                            <label htmlFor="username" style={styles.label}>Usuario</label>
                             <input
+                                id="username"
                                 style={styles.input}
                                 type="text"
                                 placeholder="Tu nombre de usuario"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
+                                autoComplete="username"
                                 required
                             />
                         </div>
                         
                         <div style={styles.inputGroup}>
-                            <label style={styles.label}>Contraseña</label>
+                            <label htmlFor="password" style={styles.label}>Contraseña</label>
                             <input
+                                id="password"
                                 style={styles.input}
                                 type="password"
                                 placeholder="Tu contraseña"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
+                                autoComplete="current-password"
                                 required
                             />
                         </div>
                         
-                        <button style={styles.button} type="submit">Iniciar Sesión</button>
+                        <button
+                            style={{
+                                ...styles.button,
+                                opacity: isLoading ? 0.7 : 1,
+                                cursor: isLoading ? 'not-allowed' : 'pointer'
+                            }}
+                            type="submit"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+                        </button>
                         <button style={styles.backButton} type="button" onClick={() => navigate('/kiosk')}>
                             Volver al Kiosco
                         </button>
