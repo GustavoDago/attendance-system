@@ -106,7 +106,9 @@ const HolidayConfigPage = () => {
                                     <td colSpan="3" style={styles.emptyText}>No hay feriados registrados.</td>
                                 </tr>
                             ) : (
-                                holidays.map(h => (
+                                [...holidays]
+                                    .sort((a, b) => new Date(a.date) - new Date(b.date))
+                                    .map(h => (
                                     <tr key={h.id} style={styles.tr}>
                                         <td style={styles.td}>
                                             {new Date(h.date + 'T00:00:00').toLocaleDateString('es-AR')}

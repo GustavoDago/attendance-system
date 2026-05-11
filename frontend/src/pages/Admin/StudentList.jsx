@@ -240,8 +240,8 @@ const styles = {
     },
     searchBox: {
         position: 'relative',
-        flex: 1,
-        minWidth: '300px',
+        flex: '1',
+        minWidth: '250px',
     },
     searchIcon: {
         position: 'absolute',
@@ -258,6 +258,7 @@ const styles = {
         fontSize: '0.95rem',
         outline: 'none',
         boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+        boxSizing: 'border-box',
     },
     filterSelect: {
         padding: '12px',
@@ -267,6 +268,7 @@ const styles = {
         fontSize: '0.95rem',
         outline: 'none',
         minWidth: '180px',
+        flexShrink: 0,
     },
     checkboxLabel: {
         display: 'flex',
