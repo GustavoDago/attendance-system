@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -12,12 +12,7 @@ const StudentList = () => {
     const [courses, setCourses] = useState([]);
     const [showInactive, setShowInactive] = useState(false);
 
-    useEffect(() => {
-        fetchStudents();
-        fetchCourses();
-    }, [showInactive]);
-
-    const fetchStudents = async () => {
+    const fetchStudents = useCallback(async () => {
         setLoading(true);
         try {
             const response = await axios.get(`/api/students?onlyActive=${!showInactive}`);
@@ -28,16 +23,24 @@ const StudentList = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [showInactive]);
 
-    const fetchCourses = async () => {
+    const fetchCourses = useCallback(async () => {
         try {
             const response = await axios.get('/api/common/courses');
             setCourses(response.data);
         } catch (error) {
             console.error('Error fetching courses:', error);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        const loadData = async () => {
+            await fetchStudents();
+            await fetchCourses();
+        };
+        loadData();
+    }, [fetchStudents, fetchCourses]);
 
     const handleDeactivate = async (id, name) => {
         if (window.confirm(`¿Está seguro de que desea desactivar al alumno ${name}?`)) {
@@ -45,7 +48,7 @@ const StudentList = () => {
                 await axios.delete(`/api/students/${id}`);
                 toast.success('Alumno desactivado');
                 fetchStudents();
-            } catch (error) {
+            } catch {
                 toast.error('Error al desactivar');
             }
         }
@@ -56,7 +59,7 @@ const StudentList = () => {
             await axios.post(`/api/students/${id}/activate`);
             toast.success('Alumno reactivado');
             fetchStudents();
-        } catch (error) {
+        } catch {
             toast.error('Error al activar');
         }
     };
@@ -84,20 +87,32 @@ const StudentList = () => {
 
             <div style={styles.filtersContainer}>
                 <div style={styles.searchBox}>
-                    <span style={styles.searchIcon}>🔍</span>
+                    <span style={styles.searchIcon} aria-hidden="true">🔍</span>
                     <input 
                         type="text" 
                         placeholder="Buscar por nombre, DNI o legajo..." 
                         style={styles.searchInput}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
+                        aria-label="Buscar alumnos por nombre, DNI o legajo"
                     />
+                    {searchTerm && (
+                        <button
+                            onClick={() => setSearchTerm('')}
+                            style={styles.clearButton}
+                            title="Limpiar búsqueda"
+                            aria-label="Limpiar búsqueda"
+                        >
+                            ✕
+                        </button>
+                    )}
                 </div>
                 
                 <select 
                     style={styles.filterSelect}
                     value={courseFilter}
                     onChange={(e) => setCourseFilter(e.target.value)}
+                    aria-label="Filtrar por curso"
                 >
                     <option value="">Todos los cursos</option>
                     {courses.map(course => (
@@ -107,8 +122,9 @@ const StudentList = () => {
                     ))}
                 </select>
 
-                <label style={styles.checkboxLabel}>
+                <label style={styles.checkboxLabel} htmlFor="show-inactive-check">
                     <input 
+                        id="show-inactive-check"
                         type="checkbox" 
                         checked={showInactive}
                         onChange={(e) => setShowInactive(e.target.checked)}
@@ -160,32 +176,36 @@ const StudentList = () => {
                                                 onClick={() => navigate(`/admin/students/edit/${student.id}`)}
                                                 style={styles.actionBtnEdit}
                                                 title="Editar"
+                                                aria-label={`Editar alumno ${student.firstName} ${student.lastName}`}
                                             >
-                                                ✏️
+                                                <span aria-hidden="true">✏️</span>
                                             </button>
                                             <Link 
                                                 to={`/admin/qr/${student.id}`} 
                                                 target="_blank" 
                                                 style={styles.actionBtnPrint}
                                                 title="Imprimir QR"
+                                                aria-label={`Imprimir código QR de ${student.firstName} ${student.lastName}`}
                                             >
-                                                🖨️
+                                                <span aria-hidden="true">🖨️</span>
                                             </Link>
                                             {student.active ? (
                                                 <button 
                                                     onClick={() => handleDeactivate(student.id, `${student.firstName} ${student.lastName}`)}
                                                     style={styles.actionBtnDelete}
                                                     title="Desactivar"
+                                                    aria-label={`Desactivar alumno ${student.firstName} ${student.lastName}`}
                                                 >
-                                                    🚫
+                                                    <span aria-hidden="true">🚫</span>
                                                 </button>
                                             ) : (
                                                 <button 
                                                     onClick={() => handleActivate(student.id)}
                                                     style={styles.actionBtnActivate}
                                                     title="Reactivar"
+                                                    aria-label={`Reactivar alumno ${student.firstName} ${student.lastName}`}
                                                 >
-                                                    ✅
+                                                    <span aria-hidden="true">✅</span>
                                                 </button>
                                             )}
                                         </div>
@@ -196,7 +216,7 @@ const StudentList = () => {
                     </tbody>
                 </table>
             </div>
-            <div style={styles.footer}>
+            <div style={styles.footer} aria-live="polite">
                 Mostrando {filteredStudents.length} alumnos
             </div>
         </div>
@@ -249,6 +269,25 @@ const styles = {
         top: '50%',
         transform: 'translateY(-50%)',
         color: '#b2bec3',
+    },
+    clearButton: {
+        position: 'absolute',
+        right: '12px',
+        top: '50%',
+        transform: 'translateY(-50%)',
+        background: '#dfe6e9',
+        border: 'none',
+        borderRadius: '50%',
+        width: '20px',
+        height: '20px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        fontSize: '10px',
+        color: '#636e72',
+        padding: 0,
+        transition: 'background 0.2s',
     },
     searchInput: {
         width: '100%',

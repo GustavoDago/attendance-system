@@ -46,8 +46,10 @@ const AdminLayout = () => {
                         onClick={() => setIsCollapsed(!isCollapsed)} 
                         style={styles.toggleBtn}
                         title={isCollapsed ? "Expandir" : "Colapsar"}
+                        aria-label={isCollapsed ? "Expandir barra lateral" : "Colapsar barra lateral"}
+                        aria-expanded={!isCollapsed}
                     >
-                        {isCollapsed ? '→' : '←'}
+                        <span aria-hidden="true">{isCollapsed ? '→' : '←'}</span>
                     </button>
                 </div>
                 
