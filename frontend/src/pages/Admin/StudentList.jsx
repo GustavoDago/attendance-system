@@ -12,12 +12,7 @@ const StudentList = () => {
     const [courses, setCourses] = useState([]);
     const [showInactive, setShowInactive] = useState(false);
 
-    useEffect(() => {
-        fetchStudents();
-        fetchCourses();
-    }, [showInactive]);
-
-    const fetchStudents = async () => {
+    const fetchStudents = React.useCallback(async () => {
         setLoading(true);
         try {
             const response = await axios.get(`/api/students?onlyActive=${!showInactive}`);
@@ -28,16 +23,23 @@ const StudentList = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [showInactive]);
 
-    const fetchCourses = async () => {
+    const fetchCourses = React.useCallback(async () => {
         try {
             const response = await axios.get('/api/common/courses');
             setCourses(response.data);
         } catch (error) {
             console.error('Error fetching courses:', error);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        const loadData = async () => {
+            await Promise.all([fetchStudents(), fetchCourses()]);
+        };
+        loadData();
+    }, [fetchStudents, fetchCourses]);
 
     const handleDeactivate = async (id, name) => {
         if (window.confirm(`¿Está seguro de que desea desactivar al alumno ${name}?`)) {
@@ -45,7 +47,8 @@ const StudentList = () => {
                 await axios.delete(`/api/students/${id}`);
                 toast.success('Alumno desactivado');
                 fetchStudents();
-            } catch (error) {
+            } catch (err) {
+                console.error(err);
                 toast.error('Error al desactivar');
             }
         }
@@ -56,16 +59,17 @@ const StudentList = () => {
             await axios.post(`/api/students/${id}/activate`);
             toast.success('Alumno reactivado');
             fetchStudents();
-        } catch (error) {
+        } catch (err) {
+            console.error(err);
             toast.error('Error al activar');
         }
     };
 
     const filteredStudents = students.filter(student => {
         const matchesSearch = 
-            student.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            student.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            student.dni.includes(searchTerm) ||
+            (student.firstName && student.firstName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (student.lastName && student.lastName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (student.dni && student.dni.includes(searchTerm)) ||
             (student.studentFileId && student.studentFileId.includes(searchTerm));
         
         const matchesCourse = courseFilter === '' || student.courseId === parseInt(courseFilter);
@@ -84,20 +88,31 @@ const StudentList = () => {
 
             <div style={styles.filtersContainer}>
                 <div style={styles.searchBox}>
-                    <span style={styles.searchIcon}>🔍</span>
+                    <span style={styles.searchIcon} aria-hidden="true">🔍</span>
                     <input 
                         type="text" 
                         placeholder="Buscar por nombre, DNI o legajo..." 
                         style={styles.searchInput}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
+                        aria-label="Buscar alumnos"
                     />
+                    {searchTerm && (
+                        <button
+                            style={styles.clearButton}
+                            onClick={() => setSearchTerm('')}
+                            aria-label="Limpiar búsqueda"
+                        >
+                            ✕
+                        </button>
+                    )}
                 </div>
                 
                 <select 
                     style={styles.filterSelect}
                     value={courseFilter}
                     onChange={(e) => setCourseFilter(e.target.value)}
+                    aria-label="Filtrar por curso"
                 >
                     <option value="">Todos los cursos</option>
                     {courses.map(course => (
@@ -160,6 +175,7 @@ const StudentList = () => {
                                                 onClick={() => navigate(`/admin/students/edit/${student.id}`)}
                                                 style={styles.actionBtnEdit}
                                                 title="Editar"
+                                                aria-label={`Editar a ${student.firstName} ${student.lastName}`}
                                             >
                                                 ✏️
                                             </button>
@@ -168,6 +184,7 @@ const StudentList = () => {
                                                 target="_blank" 
                                                 style={styles.actionBtnPrint}
                                                 title="Imprimir QR"
+                                                aria-label={`Imprimir QR de ${student.firstName} ${student.lastName}`}
                                             >
                                                 🖨️
                                             </Link>
@@ -176,6 +193,7 @@ const StudentList = () => {
                                                     onClick={() => handleDeactivate(student.id, `${student.firstName} ${student.lastName}`)}
                                                     style={styles.actionBtnDelete}
                                                     title="Desactivar"
+                                                    aria-label={`Desactivar a ${student.firstName} ${student.lastName}`}
                                                 >
                                                     🚫
                                                 </button>
@@ -184,6 +202,7 @@ const StudentList = () => {
                                                     onClick={() => handleActivate(student.id)}
                                                     style={styles.actionBtnActivate}
                                                     title="Reactivar"
+                                                    aria-label={`Reactivar a ${student.firstName} ${student.lastName}`}
                                                 >
                                                     ✅
                                                 </button>
@@ -252,13 +271,30 @@ const styles = {
     },
     searchInput: {
         width: '100%',
-        padding: '12px 12px 12px 40px',
+        padding: '12px 40px 12px 40px',
         borderRadius: '10px',
         border: '1px solid #dfe6e9',
         fontSize: '0.95rem',
         outline: 'none',
         boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
         boxSizing: 'border-box',
+    },
+    clearButton: {
+        position: 'absolute',
+        right: '12px',
+        top: '50%',
+        transform: 'translateY(-50%)',
+        background: 'none',
+        border: 'none',
+        color: '#b2bec3',
+        cursor: 'pointer',
+        fontSize: '1.1rem',
+        padding: '5px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: '50%',
+        transition: 'background-color 0.2s, color 0.2s',
     },
     filterSelect: {
         padding: '12px',
