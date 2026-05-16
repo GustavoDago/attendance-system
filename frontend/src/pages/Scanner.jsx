@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Html5QrcodeScanner } from "html5-qrcode";
 import axios from 'axios';
@@ -7,21 +7,23 @@ const Scanner = () => {
     const { type } = useParams(); // ENTRY or EXIT
     const navigate = useNavigate();
     const [message, setMessage] = useState(null);
+    const [isProcessing, setIsProcessing] = useState(false);
     const scannerRef = useRef(null);
     const timeoutRef = useRef(null);
+    const redirectTimeoutRef = useRef(null);
 
     // Function to handle returning to home
-    const returnHome = () => {
+    const returnHome = useCallback(() => {
         navigate('/');
-    };
+    }, [navigate]);
 
-    const resetInactivityTimeout = () => {
+    const resetInactivityTimeout = useCallback(() => {
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
         }
         // 30 seconds inactivity timeout
         timeoutRef.current = setTimeout(returnHome, 30000);
-    };
+    }, [returnHome]);
 
     useEffect(() => {
         // Start the inactivity timeout
@@ -48,7 +50,7 @@ const Scanner = () => {
             handleScan(decodedText);
         };
 
-        const onScanFailure = (error) => {
+        const onScanFailure = () => {
             // We do NOT reset timeout on scan failure, because failures happen constantly 
             // while it's looking for a code (every frame). Only reset on specific interactions if needed.
         };
@@ -60,6 +62,9 @@ const Scanner = () => {
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
             }
+            if (redirectTimeoutRef.current) {
+                clearTimeout(redirectTimeoutRef.current);
+            }
             if (scannerRef.current) {
                 scannerRef.current.clear().catch(error => {
                     console.error("Failed to clear html5-qrcode scanner. ", error);
@@ -70,6 +75,7 @@ const Scanner = () => {
 
         // Inner function to capture latest 'type'
         async function handleScan(qrToken) {
+            setIsProcessing(true);
             try {
                 const response = await axios.post('/api/attendance', {
                     qrToken: qrToken,
@@ -79,14 +85,14 @@ const Scanner = () => {
                 const student = response.data.student;
                 const recordType = response.data.type;
 
-                let successMsg = `¡Bienvenido, ${student.firstName} ${student.lastName}!`;
+                let successMsg = `✅ ¡Bienvenido, ${student.firstName} ${student.lastName}!`;
                 let msgType = 'success';
 
                 if (recordType === 'LATE') {
-                    successMsg = `¡Ingreso registrado (TARDE), ${student.firstName}!`;
+                    successMsg = `⚠️ ¡Ingreso registrado (TARDE), ${student.firstName}!`;
                     msgType = 'warning';
                 } else if (recordType === 'EXIT') {
-                    successMsg = `¡Hasta luego, ${student.firstName} ${student.lastName}!`;
+                    successMsg = `✅ ¡Hasta luego, ${student.firstName} ${student.lastName}!`;
                 }
 
                 setMessage({
@@ -107,29 +113,37 @@ const Scanner = () => {
                 if (errorMsg.includes('1 hora') || errorMsg.includes('misma acción')) {
                     setMessage({
                         type: 'warning',
-                        text: '⚠ Ya registró esta acción. Espere al menos 1 hora.'
+                        text: '⚠️ Ya registró esta acción. Espere al menos 1 hora.'
                     });
                 } else {
                     setMessage({
                         type: 'error',
-                        text: errorMsg
+                        text: `❌ ${errorMsg}`
                     });
                 }
+            } finally {
+                setIsProcessing(false);
             }
 
             // Redirect after 3 seconds
-            setTimeout(() => {
+            redirectTimeoutRef.current = setTimeout(() => {
                 navigate('/');
             }, 3000);
         }
 
-    }, [type, navigate]);
+    }, [type, navigate, resetInactivityTimeout]);
 
     return (
         <div className="kiosk-mode" style={styles.container}>
             <h1 style={styles.title}>Escaneando para: {type === 'ENTRY' ? 'INGRESO' : 'EGRESO'}</h1>
 
-            <div id="reader" style={{ width: '500px', display: message ? 'none' : 'block' }}></div>
+            {isProcessing && (
+                <div style={styles.message}>
+                    Procesando...
+                </div>
+            )}
+
+            <div id="reader" style={{ width: '500px', display: (message || isProcessing) ? 'none' : 'block' }}></div>
 
             {message && (
                 <div style={{
@@ -141,7 +155,11 @@ const Scanner = () => {
                 </div>
             )}
 
-            <button style={styles.button} onClick={returnHome}>
+            <button
+                style={styles.button}
+                onClick={returnHome}
+                aria-label="Cancelar escaneo y volver al inicio"
+            >
                 Cancelar
             </button>
         </div>
@@ -166,6 +184,7 @@ const styles = {
     message: {
         padding: '30px',
         color: 'white',
+        backgroundColor: '#2196F3',
         borderRadius: '10px',
         marginTop: '20px',
         fontSize: '2rem',
