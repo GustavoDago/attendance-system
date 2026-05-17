@@ -12,7 +12,7 @@ const Scanner = () => {
 
     // Function to handle returning to home
     const returnHome = () => {
-        navigate('/');
+        navigate('/kiosk');
     };
 
     const resetInactivityTimeout = () => {
@@ -48,7 +48,7 @@ const Scanner = () => {
             handleScan(decodedText);
         };
 
-        const onScanFailure = (error) => {
+        const onScanFailure = () => {
             // We do NOT reset timeout on scan failure, because failures happen constantly 
             // while it's looking for a code (every frame). Only reset on specific interactions if needed.
         };
@@ -79,14 +79,14 @@ const Scanner = () => {
                 const student = response.data.student;
                 const recordType = response.data.type;
 
-                let successMsg = `¡Bienvenido, ${student.firstName} ${student.lastName}!`;
+                let successMsg = `✅ ¡Bienvenido, ${student.firstName} ${student.lastName}!`;
                 let msgType = 'success';
 
                 if (recordType === 'LATE') {
-                    successMsg = `¡Ingreso registrado (TARDE), ${student.firstName}!`;
+                    successMsg = `⚠️ ¡Ingreso registrado (TARDE), ${student.firstName}!`;
                     msgType = 'warning';
                 } else if (recordType === 'EXIT') {
-                    successMsg = `¡Hasta luego, ${student.firstName} ${student.lastName}!`;
+                    successMsg = `✅ ¡Hasta luego, ${student.firstName} ${student.lastName}!`;
                 }
 
                 setMessage({
@@ -107,19 +107,19 @@ const Scanner = () => {
                 if (errorMsg.includes('1 hora') || errorMsg.includes('misma acción')) {
                     setMessage({
                         type: 'warning',
-                        text: '⚠ Ya registró esta acción. Espere al menos 1 hora.'
+                        text: '⚠️ Ya registró esta acción. Espere al menos 1 hora.'
                     });
                 } else {
                     setMessage({
                         type: 'error',
-                        text: errorMsg
+                        text: `❌ ${errorMsg}`
                     });
                 }
             }
 
             // Redirect after 3 seconds
-            setTimeout(() => {
-                navigate('/');
+            timeoutRef.current = setTimeout(() => {
+                navigate('/kiosk');
             }, 3000);
         }
 
@@ -132,16 +132,24 @@ const Scanner = () => {
             <div id="reader" style={{ width: '500px', display: message ? 'none' : 'block' }}></div>
 
             {message && (
-                <div style={{
-                    ...styles.message,
-                    backgroundColor: message.type === 'success' ? '#4CAF50' :
-                        message.type === 'warning' ? '#ff9800' : '#f44336'
-                }}>
+                <div
+                    role="alert"
+                    aria-live="assertive"
+                    style={{
+                        ...styles.message,
+                        backgroundColor: message.type === 'success' ? '#4CAF50' :
+                            message.type === 'warning' ? '#ff9800' : '#f44336'
+                    }}
+                >
                     {message.text}
                 </div>
             )}
 
-            <button style={styles.button} onClick={returnHome}>
+            <button
+                style={styles.button}
+                onClick={returnHome}
+                aria-label="Cancelar escaneo y volver al inicio"
+            >
                 Cancelar
             </button>
         </div>
