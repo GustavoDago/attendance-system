@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Html5QrcodeScanner } from "html5-qrcode";
 import axios from 'axios';
@@ -7,21 +7,23 @@ const Scanner = () => {
     const { type } = useParams(); // ENTRY or EXIT
     const navigate = useNavigate();
     const [message, setMessage] = useState(null);
+    const [isProcessing, setIsProcessing] = useState(false);
     const scannerRef = useRef(null);
     const timeoutRef = useRef(null);
+    const redirectTimeoutRef = useRef(null);
 
     // Function to handle returning to home
-    const returnHome = () => {
+    const returnHome = useCallback(() => {
         navigate('/');
-    };
+    }, [navigate]);
 
-    const resetInactivityTimeout = () => {
+    const resetInactivityTimeout = useCallback(() => {
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
         }
         // 30 seconds inactivity timeout
         timeoutRef.current = setTimeout(returnHome, 30000);
-    };
+    }, [returnHome]);
 
     useEffect(() => {
         // Start the inactivity timeout
@@ -48,7 +50,7 @@ const Scanner = () => {
             handleScan(decodedText);
         };
 
-        const onScanFailure = (error) => {
+        const onScanFailure = () => {
             // We do NOT reset timeout on scan failure, because failures happen constantly 
             // while it's looking for a code (every frame). Only reset on specific interactions if needed.
         };
@@ -60,6 +62,9 @@ const Scanner = () => {
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
             }
+            if (redirectTimeoutRef.current) {
+                clearTimeout(redirectTimeoutRef.current);
+            }
             if (scannerRef.current) {
                 scannerRef.current.clear().catch(error => {
                     console.error("Failed to clear html5-qrcode scanner. ", error);
@@ -70,6 +75,7 @@ const Scanner = () => {
 
         // Inner function to capture latest 'type'
         async function handleScan(qrToken) {
+            setIsProcessing(true);
             try {
                 const response = await axios.post('/api/attendance', {
                     qrToken: qrToken,
@@ -115,28 +121,41 @@ const Scanner = () => {
                         text: errorMsg
                     });
                 }
+            } finally {
+                setIsProcessing(false);
             }
 
             // Redirect after 3 seconds
-            setTimeout(() => {
+            redirectTimeoutRef.current = setTimeout(() => {
                 navigate('/');
             }, 3000);
         }
 
-    }, [type, navigate]);
+    }, [type, navigate, resetInactivityTimeout]);
 
     return (
         <div className="kiosk-mode" style={styles.container}>
             <h1 style={styles.title}>Escaneando para: {type === 'ENTRY' ? 'INGRESO' : 'EGRESO'}</h1>
 
-            <div id="reader" style={{ width: '500px', display: message ? 'none' : 'block' }}></div>
+            <div id="reader" style={{ width: '500px', display: (message || isProcessing) ? 'none' : 'block' }}></div>
+
+            {isProcessing && (
+                <div style={styles.processing}>
+                    ⌛ Procesando...
+                </div>
+            )}
 
             {message && (
-                <div style={{
-                    ...styles.message,
-                    backgroundColor: message.type === 'success' ? '#4CAF50' :
-                        message.type === 'warning' ? '#ff9800' : '#f44336'
-                }}>
+                <div
+                    role="alert"
+                    aria-live="assertive"
+                    style={{
+                        ...styles.message,
+                        backgroundColor: message.type === 'success' ? '#4CAF50' :
+                            message.type === 'warning' ? '#ff9800' : '#f44336'
+                    }}
+                >
+                    {message.type === 'success' ? '✅ ' : message.type === 'warning' ? '⚠️ ' : '❌ '}
                     {message.text}
                 </div>
             )}
@@ -149,6 +168,17 @@ const Scanner = () => {
 };
 
 const styles = {
+    processing: {
+        padding: '30px',
+        color: '#555',
+        backgroundColor: '#eee',
+        borderRadius: '10px',
+        marginTop: '20px',
+        fontSize: '2rem',
+        textAlign: 'center',
+        fontWeight: 'bold',
+        border: '2px dashed #999',
+    },
     container: {
         display: 'flex',
         flexDirection: 'column',
