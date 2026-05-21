@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -12,12 +12,7 @@ const StudentList = () => {
     const [courses, setCourses] = useState([]);
     const [showInactive, setShowInactive] = useState(false);
 
-    useEffect(() => {
-        fetchStudents();
-        fetchCourses();
-    }, [showInactive]);
-
-    const fetchStudents = async () => {
+    const fetchStudents = useCallback(async () => {
         setLoading(true);
         try {
             const response = await axios.get(`/api/students?onlyActive=${!showInactive}`);
@@ -28,16 +23,28 @@ const StudentList = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [showInactive]);
 
-    const fetchCourses = async () => {
+    const fetchCourses = useCallback(async () => {
         try {
             const response = await axios.get('/api/common/courses');
             setCourses(response.data);
         } catch (error) {
             console.error('Error fetching courses:', error);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        let isMounted = true;
+        const loadData = async () => {
+            if (isMounted) {
+                await fetchStudents();
+                await fetchCourses();
+            }
+        };
+        loadData();
+        return () => { isMounted = false; };
+    }, [fetchStudents, fetchCourses]);
 
     const handleDeactivate = async (id, name) => {
         if (window.confirm(`¿Está seguro de que desea desactivar al alumno ${name}?`)) {
@@ -45,7 +52,8 @@ const StudentList = () => {
                 await axios.delete(`/api/students/${id}`);
                 toast.success('Alumno desactivado');
                 fetchStudents();
-            } catch (error) {
+            } catch (err) {
+                console.error(err);
                 toast.error('Error al desactivar');
             }
         }
@@ -56,17 +64,18 @@ const StudentList = () => {
             await axios.post(`/api/students/${id}/activate`);
             toast.success('Alumno reactivado');
             fetchStudents();
-        } catch (error) {
+        } catch (err) {
+            console.error(err);
             toast.error('Error al activar');
         }
     };
 
     const filteredStudents = students.filter(student => {
         const matchesSearch = 
-            student.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            student.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            student.dni.includes(searchTerm) ||
-            (student.studentFileId && student.studentFileId.includes(searchTerm));
+            (student.firstName?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) ||
+            (student.lastName?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) ||
+            (student.dni ?? '').includes(searchTerm) ||
+            (student.studentFileId?.includes(searchTerm) ?? false);
         
         const matchesCourse = courseFilter === '' || student.courseId === parseInt(courseFilter);
         
@@ -91,6 +100,7 @@ const StudentList = () => {
                         style={styles.searchInput}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
+                        aria-label="Buscar alumnos por nombre, DNI o legajo"
                     />
                 </div>
                 
@@ -160,6 +170,7 @@ const StudentList = () => {
                                                 onClick={() => navigate(`/admin/students/edit/${student.id}`)}
                                                 style={styles.actionBtnEdit}
                                                 title="Editar"
+                                                aria-label="Editar alumno"
                                             >
                                                 ✏️
                                             </button>
@@ -168,6 +179,7 @@ const StudentList = () => {
                                                 target="_blank" 
                                                 style={styles.actionBtnPrint}
                                                 title="Imprimir QR"
+                                                aria-label="Imprimir QR de alumno"
                                             >
                                                 🖨️
                                             </Link>
@@ -176,6 +188,7 @@ const StudentList = () => {
                                                     onClick={() => handleDeactivate(student.id, `${student.firstName} ${student.lastName}`)}
                                                     style={styles.actionBtnDelete}
                                                     title="Desactivar"
+                                                    aria-label="Desactivar alumno"
                                                 >
                                                     🚫
                                                 </button>
@@ -184,6 +197,7 @@ const StudentList = () => {
                                                     onClick={() => handleActivate(student.id)}
                                                     style={styles.actionBtnActivate}
                                                     title="Reactivar"
+                                                    aria-label="Reactivar alumno"
                                                 >
                                                     ✅
                                                 </button>
