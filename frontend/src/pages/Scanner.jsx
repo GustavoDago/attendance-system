@@ -10,20 +10,20 @@ const Scanner = () => {
     const scannerRef = useRef(null);
     const timeoutRef = useRef(null);
 
-    // Function to handle returning to home
-    const returnHome = () => {
-        navigate('/');
-    };
-
-    const resetInactivityTimeout = () => {
-        if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-        }
-        // 30 seconds inactivity timeout
-        timeoutRef.current = setTimeout(returnHome, 30000);
-    };
-
     useEffect(() => {
+        // Function to handle returning to home
+        const returnHome = () => {
+            navigate('/');
+        };
+
+        const resetInactivityTimeout = () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+            // 30 seconds inactivity timeout
+            timeoutRef.current = setTimeout(returnHome, 30000);
+        };
+
         // Start the inactivity timeout
         resetInactivityTimeout();
 
@@ -48,7 +48,7 @@ const Scanner = () => {
             handleScan(decodedText);
         };
 
-        const onScanFailure = (error) => {
+        const onScanFailure = () => {
             // We do NOT reset timeout on scan failure, because failures happen constantly 
             // while it's looking for a code (every frame). Only reset on specific interactions if needed.
         };
@@ -132,16 +132,23 @@ const Scanner = () => {
             <div id="reader" style={{ width: '500px', display: message ? 'none' : 'block' }}></div>
 
             {message && (
-                <div style={{
-                    ...styles.message,
-                    backgroundColor: message.type === 'success' ? '#4CAF50' :
-                        message.type === 'warning' ? '#ff9800' : '#f44336'
-                }}>
-                    {message.text}
+                <div
+                    role="alert"
+                    aria-live="assertive"
+                    style={{
+                        ...styles.message,
+                        backgroundColor: message.type === 'success' ? '#4CAF50' :
+                            message.type === 'warning' ? '#ff9800' : '#f44336'
+                    }}
+                >
+                    <div style={styles.messageIcon}>
+                        {message.type === 'success' ? '✅' : message.type === 'warning' ? '⚠️' : '❌'}
+                    </div>
+                    <div>{message.text}</div>
                 </div>
             )}
 
-            <button style={styles.button} onClick={returnHome}>
+            <button style={styles.button} onClick={() => navigate('/')}>
                 Cancelar
             </button>
         </div>
@@ -164,13 +171,22 @@ const styles = {
         fontSize: '2rem',
     },
     message: {
-        padding: '30px',
+        padding: '40px',
         color: 'white',
-        borderRadius: '10px',
+        borderRadius: '15px',
         marginTop: '20px',
-        fontSize: '2rem',
+        fontSize: '2.5rem',
         textAlign: 'center',
         fontWeight: 'bold',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '20px',
+        maxWidth: '80%',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+    },
+    messageIcon: {
+        fontSize: '4rem',
     },
     button: {
         marginTop: '30px',
