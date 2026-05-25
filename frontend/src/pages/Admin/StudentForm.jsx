@@ -29,14 +29,7 @@ const StudentForm = () => {
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(isEdit);
 
-    useEffect(() => {
-        fetchCourses();
-        if (isEdit) {
-            fetchStudent();
-        }
-    }, [id]);
-
-    const fetchCourses = async () => {
+    const fetchCourses = React.useCallback(async () => {
         try {
             const response = await axios.get('/api/common/courses');
             setCourses(response.data);
@@ -44,9 +37,9 @@ const StudentForm = () => {
             console.error('Error fetching courses:', error);
             toast.error('Error al cargar cursos');
         }
-    };
+    }, []);
 
-    const fetchStudent = async () => {
+    const fetchStudent = React.useCallback(async () => {
         setFetching(true);
         try {
             const response = await axios.get(`/api/students/${id}`);
@@ -68,7 +61,23 @@ const StudentForm = () => {
         } finally {
             setFetching(false);
         }
-    };
+    }, [id, navigate]);
+
+    useEffect(() => {
+        let isMounted = true;
+        const loadData = async () => {
+            if (isMounted) {
+                await fetchCourses();
+                if (isEdit) {
+                    await fetchStudent();
+                }
+            }
+        };
+        loadData();
+        return () => {
+            isMounted = false;
+        };
+    }, [isEdit, fetchCourses, fetchStudent]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -111,28 +120,28 @@ const StudentForm = () => {
                     <h3 style={styles.sectionTitle}>Información Personal</h3>
                     <div style={styles.grid}>
                         <div style={styles.group}>
-                            <label style={styles.label}>Nombre *</label>
-                            <input style={styles.input} name="firstName" value={formData.firstName} onChange={handleChange} required placeholder="Ej: Juan" />
+                            <label htmlFor="firstName" style={styles.label}>Nombre *</label>
+                            <input id="firstName" style={styles.input} name="firstName" value={formData.firstName} onChange={handleChange} required aria-required="true" placeholder="Ej: Juan" />
                         </div>
                         <div style={styles.group}>
-                            <label style={styles.label}>Apellido *</label>
-                            <input style={styles.input} name="lastName" value={formData.lastName} onChange={handleChange} required placeholder="Ej: Pérez" />
+                            <label htmlFor="lastName" style={styles.label}>Apellido *</label>
+                            <input id="lastName" style={styles.input} name="lastName" value={formData.lastName} onChange={handleChange} required aria-required="true" placeholder="Ej: Pérez" />
                         </div>
                         <div style={styles.group}>
-                            <label style={styles.label}>DNI *</label>
-                            <input style={styles.input} name="dni" value={formData.dni} onChange={handleChange} required placeholder="Solo números" />
+                            <label htmlFor="dni" style={styles.label}>DNI *</label>
+                            <input id="dni" style={styles.input} name="dni" value={formData.dni} onChange={handleChange} required aria-required="true" placeholder="Solo números" />
                         </div>
                         <div style={styles.group}>
-                            <label style={styles.label}>Fecha de Nacimiento</label>
-                            <input type="date" style={styles.input} name="birthDate" value={formData.birthDate} onChange={handleChange} />
+                            <label htmlFor="birthDate" style={styles.label}>Fecha de Nacimiento</label>
+                            <input id="birthDate" type="date" style={styles.input} name="birthDate" value={formData.birthDate} onChange={handleChange} />
                         </div>
                         <div style={styles.group}>
-                            <label style={styles.label}>Nacionalidad</label>
-                            <input style={styles.input} name="nationality" value={formData.nationality} onChange={handleChange} placeholder="Ej: Argentina" />
+                            <label htmlFor="nationality" style={styles.label}>Nacionalidad</label>
+                            <input id="nationality" style={styles.input} name="nationality" value={formData.nationality} onChange={handleChange} placeholder="Ej: Argentina" />
                         </div>
                         <div style={styles.group}>
-                            <label style={styles.label}>Lugar de Nacimiento</label>
-                            <input style={styles.input} name="birthPlace" value={formData.birthPlace} onChange={handleChange} placeholder="Ej: San Nicolás" />
+                            <label htmlFor="birthPlace" style={styles.label}>Lugar de Nacimiento</label>
+                            <input id="birthPlace" style={styles.input} name="birthPlace" value={formData.birthPlace} onChange={handleChange} placeholder="Ej: San Nicolás" />
                         </div>
                     </div>
                 </div>
@@ -141,12 +150,12 @@ const StudentForm = () => {
                     <h3 style={styles.sectionTitle}>Ubicación y Contacto</h3>
                     <div style={styles.grid}>
                         <div style={styles.group}>
-                            <label style={styles.label}>Dirección</label>
-                            <input style={styles.input} name="address" value={formData.address} onChange={handleChange} placeholder="Calle y número" />
+                            <label htmlFor="address" style={styles.label}>Dirección</label>
+                            <input id="address" style={styles.input} name="address" value={formData.address} onChange={handleChange} placeholder="Calle y número" />
                         </div>
                         <div style={styles.group}>
-                            <label style={styles.label}>Localidad</label>
-                            <input style={styles.input} name="city" value={formData.city} onChange={handleChange} />
+                            <label htmlFor="city" style={styles.label}>Localidad</label>
+                            <input id="city" style={styles.input} name="city" value={formData.city} onChange={handleChange} />
                         </div>
                     </div>
                 </div>
@@ -155,12 +164,12 @@ const StudentForm = () => {
                     <h3 style={styles.sectionTitle}>Datos del Tutor</h3>
                     <div style={styles.grid}>
                         <div style={styles.group}>
-                            <label style={styles.label}>Nombre del Tutor</label>
-                            <input style={styles.input} name="guardianName" value={formData.guardianName} onChange={handleChange} placeholder="Nombre completo" />
+                            <label htmlFor="guardianName" style={styles.label}>Nombre del Tutor</label>
+                            <input id="guardianName" style={styles.input} name="guardianName" value={formData.guardianName} onChange={handleChange} placeholder="Nombre completo" />
                         </div>
                         <div style={styles.group}>
-                            <label style={styles.label}>Teléfono del Tutor</label>
-                            <input style={styles.input} name="guardianPhone" value={formData.guardianPhone} onChange={handleChange} placeholder="Ej: 3364..." />
+                            <label htmlFor="guardianPhone" style={styles.label}>Teléfono del Tutor</label>
+                            <input id="guardianPhone" style={styles.input} name="guardianPhone" value={formData.guardianPhone} onChange={handleChange} placeholder="Ej: 3364..." />
                         </div>
                     </div>
                 </div>
@@ -169,12 +178,12 @@ const StudentForm = () => {
                     <h3 style={styles.sectionTitle}>Datos Académicos</h3>
                     <div style={styles.grid}>
                         <div style={styles.group}>
-                            <label style={styles.label}>Legajo</label>
-                            <input style={styles.input} name="studentFileId" value={formData.studentFileId} onChange={handleChange} placeholder="Ej: 2/26" />
+                            <label htmlFor="studentFileId" style={styles.label}>Legajo</label>
+                            <input id="studentFileId" style={styles.input} name="studentFileId" value={formData.studentFileId} onChange={handleChange} placeholder="Ej: 2/26" />
                         </div>
                         <div style={styles.group}>
-                            <label style={styles.label}>Curso *</label>
-                            <select style={styles.input} name="courseId" value={formData.courseId} onChange={handleChange} required>
+                            <label htmlFor="courseId" style={styles.label}>Curso *</label>
+                            <select id="courseId" style={styles.input} name="courseId" value={formData.courseId} onChange={handleChange} required aria-required="true">
                                 <option value="">Seleccione un curso</option>
                                 {courses.map(course => (
                                     <option key={course.id} value={course.id}>
@@ -184,12 +193,12 @@ const StudentForm = () => {
                             </select>
                         </div>
                         <div style={styles.group}>
-                            <label style={styles.label}>Nro de Orden</label>
-                            <input type="number" style={styles.input} name="orderNumber" value={formData.orderNumber} onChange={handleChange} placeholder="Ej: 15" />
+                            <label htmlFor="orderNumber" style={styles.label}>Nro de Orden</label>
+                            <input id="orderNumber" type="number" style={styles.input} name="orderNumber" value={formData.orderNumber} onChange={handleChange} placeholder="Ej: 15" />
                         </div>
                         <div style={styles.group}>
-                            <label style={styles.label}>Grupo</label>
-                            <select style={styles.input} name="groupNumber" value={formData.groupNumber} onChange={handleChange}>
+                            <label htmlFor="groupNumber" style={styles.label}>Grupo</label>
+                            <select id="groupNumber" style={styles.input} name="groupNumber" value={formData.groupNumber} onChange={handleChange}>
                                 <option value="1">Grupo 1</option>
                                 <option value="2">Grupo 2</option>
                                 <option value="3">Grupo 3</option>
