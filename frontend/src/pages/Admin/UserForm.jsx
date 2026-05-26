@@ -38,24 +38,24 @@ const UserForm = () => {
             <h2>Agregar Nuevo Usuario</h2>
             <form onSubmit={handleSubmit} style={styles.form}>
                 <div style={styles.group}>
-                    <label style={styles.label}>Nombre:</label>
-                    <input style={styles.input} name="firstName" value={formData.firstName} onChange={handleChange} required />
+                    <label htmlFor="firstName" style={styles.label}>Nombre:</label>
+                    <input id="firstName" style={styles.input} name="firstName" value={formData.firstName} onChange={handleChange} required aria-required="true" />
                 </div>
                 <div style={styles.group}>
-                    <label style={styles.label}>Apellido:</label>
-                    <input style={styles.input} name="lastName" value={formData.lastName} onChange={handleChange} required />
+                    <label htmlFor="lastName" style={styles.label}>Apellido:</label>
+                    <input id="lastName" style={styles.input} name="lastName" value={formData.lastName} onChange={handleChange} required aria-required="true" />
                 </div>
                 <div style={styles.group}>
-                    <label style={styles.label}>DNI:</label>
-                    <input style={styles.input} name="dni" value={formData.dni} onChange={handleChange} required />
+                    <label htmlFor="dni" style={styles.label}>DNI:</label>
+                    <input id="dni" style={styles.input} name="dni" value={formData.dni} onChange={handleChange} required aria-required="true" />
                 </div>
                 <div style={styles.group}>
-                    <label style={styles.label}>Usuario (Login):</label>
-                    <input style={styles.input} name="username" value={formData.username} onChange={handleChange} required />
+                    <label htmlFor="username" style={styles.label}>Usuario (Login):</label>
+                    <input id="username" style={styles.input} name="username" value={formData.username} onChange={handleChange} required aria-required="true" />
                 </div>
                 <div style={styles.group}>
-                    <label style={styles.label}>Rol:</label>
-                    <select style={styles.input} name="role" value={formData.role} onChange={handleChange}>
+                    <label htmlFor="role" style={styles.label}>Rol:</label>
+                    <select id="role" style={styles.input} name="role" value={formData.role} onChange={handleChange}>
                         <option value="STUDENT">Estudiante</option>
                         <option value="TEACHER">Profesor</option>
                         <option value="STAFF">Staff</option>
