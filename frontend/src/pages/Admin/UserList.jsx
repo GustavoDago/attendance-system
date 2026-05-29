@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -6,18 +6,30 @@ const UserList = () => {
     const [users, setUsers] = useState([]);
     const navigate = useNavigate();
 
-    useEffect(() => {
-        fetchUsers();
-    }, []);
-
-    const fetchUsers = async () => {
+    const fetchUsers = useCallback(async (isMounted) => {
         try {
             const response = await axios.get('/api/users');
-            setUsers(response.data);
+            if (isMounted()) {
+                setUsers(response.data);
+            }
         } catch (error) {
             console.error('Error fetching users:', error);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        let mounted = true;
+        const isMounted = () => mounted;
+
+        const load = async () => {
+            await fetchUsers(isMounted);
+        };
+        load();
+
+        return () => {
+            mounted = false;
+        };
+    }, [fetchUsers]);
 
     const handleDelete = async (id) => {
         if (window.confirm('¿Está seguro de que desea eliminar este usuario?')) {
@@ -70,7 +82,7 @@ const UserList = () => {
                                 <td style={styles.td}>{user.id}</td>
                                 <td style={styles.td}>
                                     <div style={styles.nameContainer}>
-                                        <div style={styles.avatar}>{user.firstName[0]}{user.lastName[0]}</div>
+                                        <div style={styles.avatar}>{user.firstName?.[0] || ''}{user.lastName?.[0] || ''}</div>
                                         <div>
                                             <div style={styles.fullName}>{user.firstName} {user.lastName}</div>
                                         </div>
@@ -87,13 +99,20 @@ const UserList = () => {
                                 </td>
                                 <td style={{ ...styles.td, textAlign: 'center' }}>
                                     <div style={styles.actions}>
-                                        <Link to={`/admin/qr/${user.id}`} target="_blank" style={styles.qrButton} title="Imprimir QR">
+                                        <Link
+                                            to={`/admin/qr/${user.id}`}
+                                            target="_blank"
+                                            style={styles.qrButton}
+                                            title="Imprimir QR"
+                                            aria-label="Imprimir QR"
+                                        >
                                             🖨️ QR
                                         </Link>
                                         <button 
                                             onClick={() => handleDelete(user.id)}
                                             style={styles.deleteButton}
                                             title="Eliminar Usuario"
+                                            aria-label="Eliminar usuario"
                                         >
                                             🗑️
                                         </button>
