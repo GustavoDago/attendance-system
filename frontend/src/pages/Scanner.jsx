@@ -87,17 +87,20 @@ const Scanner = () => {
 
                 let successMsg = `¡Bienvenido, ${student.firstName} ${student.lastName}!`;
                 let msgType = 'success';
+                let icon = '✅';
 
                 if (recordType === 'LATE') {
                     successMsg = `¡Ingreso registrado (TARDE), ${student.firstName}!`;
                     msgType = 'warning';
+                    icon = '⚠️';
                 } else if (recordType === 'EXIT') {
                     successMsg = `¡Hasta luego, ${student.firstName} ${student.lastName}!`;
                 }
 
                 setMessage({
                     type: msgType,
-                    text: successMsg
+                    text: successMsg,
+                    icon: icon
                 });
             } catch (error) {
                 console.error(error);
@@ -113,12 +116,14 @@ const Scanner = () => {
                 if (errorMsg.includes('1 hora') || errorMsg.includes('misma acción')) {
                     setMessage({
                         type: 'warning',
-                        text: '⚠ Ya registró esta acción. Espere al menos 1 hora.'
+                        text: 'Ya registró esta acción. Espere al menos 1 hora.',
+                        icon: '⚠️'
                     });
                 } else {
                     setMessage({
                         type: 'error',
-                        text: errorMsg
+                        text: errorMsg,
+                        icon: '❌'
                     });
                 }
             } finally {
@@ -159,7 +164,8 @@ const Scanner = () => {
                     role="alert"
                     aria-live="assertive"
                 >
-                    {message.text}
+                    <span>{message.icon}</span>
+                    <span>{message.text}</span>
                 </div>
             )}
 
@@ -193,6 +199,10 @@ const styles = {
         fontSize: '2rem',
         textAlign: 'center',
         fontWeight: 'bold',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '15px',
     },
     button: {
         marginTop: '30px',
