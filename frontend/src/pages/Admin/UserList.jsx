@@ -1,32 +1,50 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const UserList = () => {
     const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
-    useEffect(() => {
-        fetchUsers();
-    }, []);
-
-    const fetchUsers = async () => {
+    const fetchUsers = useCallback(async (isMounted) => {
+        setLoading(true);
         try {
             const response = await axios.get('/api/users');
-            setUsers(response.data);
+            if (isMounted()) {
+                setUsers(response.data);
+            }
         } catch (error) {
             console.error('Error fetching users:', error);
+            if (isMounted()) {
+                toast.error('Error al cargar usuarios');
+            }
+        } finally {
+            if (isMounted()) {
+                setLoading(false);
+            }
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        let mounted = true;
+        const isMounted = () => mounted;
+
+        fetchUsers(isMounted);
+
+        return () => { mounted = false; };
+    }, [fetchUsers]);
 
     const handleDelete = async (id) => {
         if (window.confirm('¿Está seguro de que desea eliminar este usuario?')) {
             try {
                 await axios.delete(`/api/users/${id}`);
-                setUsers(users.filter(user => user.id !== id));
+                setUsers(prev => prev.filter(user => user.id !== id));
+                toast.success('Usuario eliminado');
             } catch (error) {
                 console.error('Error deleting user:', error);
-                alert('No se pudo eliminar el usuario.');
+                toast.error('No se pudo eliminar el usuario');
             }
         }
     };
@@ -48,7 +66,7 @@ const UserList = () => {
                     <p style={styles.subtitle}>{users.length} usuarios registrados en el sistema</p>
                 </div>
                 <button style={styles.addButton} onClick={() => navigate('/admin/users/add')}>
-                    <span style={{ marginRight: '8px' }}>👤+</span> Agregar Usuario
+                    <span role="img" aria-label="Nuevo usuario" style={{ marginRight: '8px' }}>👤+</span> Agregar Usuario
                 </button>
             </div>
             
@@ -65,12 +83,19 @@ const UserList = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {users.map(user => (
-                            <tr key={user.id} style={styles.tr}>
+                        {loading ? (
+                            <tr><td colSpan="6" style={styles.tdCenter}>Cargando usuarios...</td></tr>
+                        ) : users.length === 0 ? (
+                            <tr><td colSpan="6" style={styles.tdCenter}>No se encontraron usuarios</td></tr>
+                        ) : (
+                            users.map(user => (
+                                <tr key={user.id} style={styles.tr}>
                                 <td style={styles.td}>{user.id}</td>
                                 <td style={styles.td}>
                                     <div style={styles.nameContainer}>
-                                        <div style={styles.avatar}>{user.firstName[0]}{user.lastName[0]}</div>
+                                        <div style={styles.avatar}>
+                                            {(user.firstName?.[0] || '') + (user.lastName?.[0] || '')}
+                                        </div>
                                         <div>
                                             <div style={styles.fullName}>{user.firstName} {user.lastName}</div>
                                         </div>
@@ -87,20 +112,28 @@ const UserList = () => {
                                 </td>
                                 <td style={{ ...styles.td, textAlign: 'center' }}>
                                     <div style={styles.actions}>
-                                        <Link to={`/admin/qr/${user.id}`} target="_blank" style={styles.qrButton} title="Imprimir QR">
-                                            🖨️ QR
+                                        <Link
+                                            to={`/admin/qr/${user.id}`}
+                                            target="_blank"
+                                            style={styles.qrButton}
+                                            title="Imprimir QR"
+                                            aria-label="Imprimir QR de usuario"
+                                        >
+                                            <span role="img" aria-hidden="true">🖨️</span> QR
                                         </Link>
                                         <button 
                                             onClick={() => handleDelete(user.id)}
                                             style={styles.deleteButton}
                                             title="Eliminar Usuario"
+                                            aria-label="Eliminar usuario"
                                         >
-                                            🗑️
+                                            <span role="img" aria-hidden="true">🗑️</span>
                                         </button>
                                     </div>
                                 </td>
                             </tr>
-                        ))}
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>
@@ -177,6 +210,12 @@ const styles = {
         verticalAlign: 'middle',
         color: '#3f4254',
         fontSize: '0.95rem',
+    },
+    tdCenter: {
+        padding: '40px',
+        textAlign: 'center',
+        color: '#b2bec3',
+        fontSize: '1.1rem',
     },
     nameContainer: {
         display: 'flex',
