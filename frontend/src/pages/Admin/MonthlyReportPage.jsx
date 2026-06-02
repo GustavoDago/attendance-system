@@ -186,6 +186,57 @@ const MonthlyReportPage = () => {
                         </button>
                     </div>
 
+                    {/* Stats Dashboard */}
+                    {(() => {
+                        const { students, dailyTotals, daysInMonth } = reportData;
+                        const activeDaysList = Object.keys(dailyTotals || {}).filter(day => {
+                            const dt = dailyTotals[day];
+                            return dt && dt.totalStudents > 0;
+                        });
+                        const activeDaysCount = activeDaysList.length;
+
+                        let totalAsistencias = 0;
+                        let totalInasistenciasCount = 0;
+                        activeDaysList.forEach(day => {
+                            totalAsistencias += dailyTotals[day].presentCount || 0;
+                            totalInasistenciasCount += dailyTotals[day].absentCount || 0;
+                        });
+
+                        const totalInasistenciasWeight = students.reduce((sum, s) => sum + (s.monthlyTotal || 0), 0);
+                        const asistenciaMedia = activeDaysCount > 0 ? (totalAsistencias / activeDaysCount) : 0;
+                        const totalPosibles = totalAsistencias + totalInasistenciasCount;
+                        const porcentajeAsistencia = totalPosibles > 0 ? (totalAsistencias / totalPosibles) * 100 : 0;
+
+                        return (
+                            <div style={styles.statsGrid}>
+                                <div style={{...styles.statCard, borderLeft: '4px solid #10b981'}}>
+                                    <span style={styles.statTitle}>Total de Asistencias</span>
+                                    <span style={styles.statValue}>{totalAsistencias}</span>
+                                    <span style={styles.statSubtitle}>Presencias registradas en el mes</span>
+                                </div>
+                                <div style={{...styles.statCard, borderLeft: '4px solid #ef4444'}}>
+                                    <span style={styles.statTitle}>Total de Inasistencias</span>
+                                    <span style={styles.statValue}>
+                                        {totalInasistenciasWeight.toFixed(1)} <span style={{fontSize: '1rem', fontWeight: 'normal'}}>faltas</span>
+                                    </span>
+                                    <span style={styles.statSubtitle}>{totalInasistenciasCount} ausencias / tardanzas</span>
+                                </div>
+                                <div style={{...styles.statCard, borderLeft: '4px solid #6366f1'}}>
+                                    <span style={styles.statTitle}>Asistencia Media Diaria</span>
+                                    <span style={styles.statValue}>
+                                        {asistenciaMedia.toFixed(1)} <span style={{fontSize: '1rem', fontWeight: 'normal'}}>alumnos</span>
+                                    </span>
+                                    <span style={styles.statSubtitle}>Sobre {activeDaysCount} días hábiles</span>
+                                </div>
+                                <div style={{...styles.statCard, borderLeft: '4px solid #8b5cf6'}}>
+                                    <span style={styles.statTitle}>Porcentaje de Asistencia</span>
+                                    <span style={styles.statValue}>{porcentajeAsistencia.toFixed(1)}%</span>
+                                    <span style={styles.statSubtitle}>Tasa de presencias sobre total</span>
+                                </div>
+                            </div>
+                        );
+                    })()}
+
                     <div style={styles.tableWrapper}>
                         <table style={styles.table}>
                             <thead>
@@ -306,6 +357,37 @@ const styles = {
         padding: '20px',
         borderRadius: '12px',
         boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
+    },
+    statsGrid: {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+        gap: '20px',
+        marginBottom: '25px'
+    },
+    statCard: {
+        backgroundColor: '#fafafb',
+        padding: '18px',
+        borderRadius: '10px',
+        border: '1px solid #f1f1f4',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '6px'
+    },
+    statTitle: {
+        fontSize: '0.75rem',
+        color: '#6b7280',
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px'
+    },
+    statValue: {
+        fontSize: '1.6rem',
+        fontWeight: '800',
+        color: '#111827'
+    },
+    statSubtitle: {
+        fontSize: '0.75rem',
+        color: '#9ca3af'
     },
     header: {
         display: 'flex',

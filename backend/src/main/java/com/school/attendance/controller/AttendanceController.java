@@ -3,6 +3,7 @@ package com.school.attendance.controller;
 import com.school.attendance.dto.*;
 import com.school.attendance.service.AttendanceService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,6 +45,9 @@ public class AttendanceController {
 
     @GetMapping("/dashboard")
     public ResponseEntity<DashboardStatsDTO> getDashboardStats(Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         return ResponseEntity.ok(attendanceService.getDashboardStats(principal.getName()));
     }
 }

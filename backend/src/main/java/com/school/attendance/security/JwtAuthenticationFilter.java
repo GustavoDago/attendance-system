@@ -54,11 +54,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception e) {
-            // Log the error (e.g. ExpiredJwtException, SignatureException, etc.)
+            // Token is invalid, expired, or malformed
+            // Ignore the exception so the request proceeds as unauthenticated
             System.err.println("JWT Authentication failed: " + e.getMessage());
-            // Do not throw the exception, let the request proceed unauthenticated.
-            // Spring Security will then deny access if the endpoint requires authentication,
-            // or allow access if the endpoint is public (like /api/auth/login).
         }
         
         filterChain.doFilter(request, response);

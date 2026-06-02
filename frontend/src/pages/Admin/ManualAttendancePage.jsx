@@ -34,35 +34,25 @@ const ManualAttendancePage = () => {
         }
     };
 
-    useEffect(() => {
-        checkHoliday(date);
-    }, [date]);
-
-    const checkHoliday = async (selectedDate) => {
-        try {
-            const res = await axios.get(`/api/holidays/check?date=${selectedDate}`);
-            if (res.status === 200 && res.data) {
-                setHolidayInfo(res.data);
-                setStudents([]); // Clear table if any
-            } else {
-                setHolidayInfo(null);
-            }
-        } catch (error) {
-            setHolidayInfo(null);
-        }
-    };
-
     const handleFetchStudents = async () => {
-        if (holidayInfo) {
-            toast.info('No se puede cargar asistencia en un día feriado');
-            return;
-        }
         if (!selectedCourse) {
             toast.warn('Seleccione un curso');
             return;
         }
         setLoading(true);
         try {
+            // 1. Check holiday status first
+            const holidayRes = await axios.get(`/api/holidays/check?date=${date}`);
+            if (holidayRes.status === 200 && holidayRes.data) {
+                setHolidayInfo(holidayRes.data);
+                setStudents([]);
+                setScheduledActivities([]);
+                setSuspendedActivities({});
+                return;
+            }
+            setHolidayInfo(null);
+
+            // 2. Fetch student list, previous attendance (if any) and active activities
             const [studentsRes, attendanceRes, activitiesRes] = await Promise.all([
                 axios.get(`/api/students`, { params: { courseId: selectedCourse } }),
                 axios.get(`/api/activity-attendance`, { params: { courseId: selectedCourse, date } }),
@@ -100,10 +90,24 @@ const ManualAttendancePage = () => {
             setStudents(studentList);
         } catch (error) {
             toast.error('Error al cargar alumnos o asistencia previa');
+            setStudents([]);
+            setScheduledActivities([]);
+            setSuspendedActivities({});
         } finally {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (selectedCourse && date) {
+            handleFetchStudents();
+        } else {
+            setStudents([]);
+            setScheduledActivities([]);
+            setSuspendedActivities({});
+            setHolidayInfo(null);
+        }
+    }, [selectedCourse, date]);
 
     const handleStatusChange = (studentId, type, newStatus) => {
         setStudents(students.map(s => 

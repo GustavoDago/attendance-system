@@ -26,8 +26,8 @@ function App() {
       <Router>
         <ToastContainer position="top-right" autoClose={3000} />
         <Routes>
-          {/* Redirect root to login (or admin if authenticated) */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          {/* Redirect root to admin (will auto-login if needed) */}
+          <Route path="/" element={<Navigate to="/admin" replace />} />
 
           {/* Kiosk Routes */}
           <Route path="/kiosk" element={<KioskHome />} />

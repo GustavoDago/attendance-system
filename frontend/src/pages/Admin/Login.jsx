@@ -8,8 +8,14 @@ const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const { login } = useAuth();
+    const { login, token, loading } = useAuth();
     const navigate = useNavigate();
+
+    React.useEffect(() => {
+        if (!loading && token) {
+            navigate('/admin');
+        }
+    }, [token, loading, navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -28,6 +34,21 @@ const Login = () => {
             setIsLoading(false);
         }
     };
+
+    if (loading) {
+        return (
+            <div style={styles.container}>
+                <div style={{ 
+                    fontSize: '1.2rem', 
+                    color: '#1e1e2d', 
+                    fontWeight: '600',
+                    fontFamily: "'Inter', system-ui, -apple-system, sans-serif" 
+                }}>
+                    Iniciando sesión...
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div style={styles.container}>
