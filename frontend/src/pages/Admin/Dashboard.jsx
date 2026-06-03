@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 
@@ -7,21 +7,29 @@ const Dashboard = () => {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        fetchStats();
-    }, []);
-
-    const fetchStats = async () => {
-        setLoading(true);
+    const fetchStats = useCallback(async () => {
         try {
             const response = await axios.get('/api/attendance/dashboard');
-            setStats(response.data);
+            return response.data;
         } catch (error) {
             console.error('Error fetching dashboard stats:', error);
-        } finally {
-            setLoading(false);
+            return null;
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        let isMounted = true;
+        const loadStats = async () => {
+            setLoading(true);
+            const data = await fetchStats();
+            if (isMounted) {
+                setStats(data);
+                setLoading(false);
+            }
+        };
+        loadStats();
+        return () => { isMounted = false; };
+    }, [fetchStats]);
 
     if (loading) return <p>Cargando Dashboard...</p>;
     if (!stats) return <p>No se pudieron cargar las estadísticas.</p>;
@@ -72,21 +80,21 @@ const Dashboard = () => {
                             <table style={styles.table}>
                                 <thead>
                                     <tr>
-                                        <th>N°</th>
-                                        <th>Alumno</th>
-                                        <th>Curso</th>
-                                        <th>Grupo</th>
-                                        <th>DNI</th>
+                                        <th style={styles.th}>N°</th>
+                                        <th style={styles.th}>Alumno</th>
+                                        <th style={styles.th}>Curso</th>
+                                        <th style={styles.th}>Grupo</th>
+                                        <th style={styles.th}>DNI</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {stats.absentStudents.map(student => (
                                         <tr key={student.id}>
-                                            <td>{student.orderNumber}</td>
-                                            <td>{student.firstName} {student.lastName}</td>
-                                            <td>{student.courseName}</td>
-                                            <td>{student.groupNumber}</td>
-                                            <td>{student.dni}</td>
+                                            <td style={styles.td}>{student.orderNumber}</td>
+                                            <td style={styles.td}>{student.firstName} {student.lastName}</td>
+                                            <td style={styles.td}>{student.courseName}</td>
+                                            <td style={styles.td}>{student.groupNumber}</td>
+                                            <td style={styles.td}>{student.dni}</td>
                                         </tr>
                                     ))}
                                 </tbody>
