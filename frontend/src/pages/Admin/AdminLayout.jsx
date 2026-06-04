@@ -46,6 +46,7 @@ const AdminLayout = () => {
                         onClick={() => setIsCollapsed(!isCollapsed)} 
                         style={styles.toggleBtn}
                         title={isCollapsed ? "Expandir" : "Colapsar"}
+                        aria-label={isCollapsed ? "Expandir menú lateral" : "Colapsar menú lateral"}
                     >
                         {isCollapsed ? '→' : '←'}
                     </button>
@@ -64,8 +65,9 @@ const AdminLayout = () => {
                                         justifyContent: isCollapsed ? 'center' : 'flex-start',
                                         padding: isCollapsed ? '12px 0' : '12px 15px',
                                     }}
+                                    aria-label={item.label}
                                 >
-                                    <span style={styles.icon}>{item.icon}</span>
+                                    <span style={styles.icon} aria-hidden="true">{item.icon}</span>
                                     {!isCollapsed && <span style={styles.label}>{item.label}</span>}
                                 </Link>
                             </li>
@@ -81,13 +83,20 @@ const AdminLayout = () => {
                             padding: isCollapsed ? '12px 0' : '12px 15px',
                         }}
                         title="Cerrar Sesión"
+                        aria-label="Cerrar Sesión"
                     >
-                        <span style={{...styles.icon, marginRight: isCollapsed ? '0' : '12px'}}>🚪</span>
+                        <span style={{...styles.icon, marginRight: isCollapsed ? '0' : '12px'}} aria-hidden="true">🚪</span>
                         {!isCollapsed && <span style={styles.label}>Cerrar Sesión</span>}
                     </button>
                 </div>
             </div>
-            <div style={styles.content}>
+            <div
+                key={location.pathname}
+                style={{
+                    ...styles.content,
+                    animation: 'fadeIn 0.5s ease-out',
+                }}
+            >
                 <Outlet />
             </div>
         </div>

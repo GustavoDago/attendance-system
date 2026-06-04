@@ -172,7 +172,7 @@ const StudentList = () => {
                                                 title="Editar"
                                                 aria-label="Editar alumno"
                                             >
-                                                ✏️
+                                                <span aria-hidden="true">✏️</span>
                                             </button>
                                             <Link 
                                                 to={`/admin/qr/${student.id}`} 
@@ -181,7 +181,7 @@ const StudentList = () => {
                                                 title="Imprimir QR"
                                                 aria-label="Imprimir QR de alumno"
                                             >
-                                                🖨️
+                                                <span aria-hidden="true">🖨️</span>
                                             </Link>
                                             {student.active ? (
                                                 <button 
@@ -190,7 +190,7 @@ const StudentList = () => {
                                                     title="Desactivar"
                                                     aria-label="Desactivar alumno"
                                                 >
-                                                    🚫
+                                                    <span aria-hidden="true">🚫</span>
                                                 </button>
                                             ) : (
                                                 <button 
@@ -199,7 +199,7 @@ const StudentList = () => {
                                                     title="Reactivar"
                                                     aria-label="Reactivar alumno"
                                                 >
-                                                    ✅
+                                                    <span aria-hidden="true">✅</span>
                                                 </button>
                                             )}
                                         </div>

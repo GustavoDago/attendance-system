@@ -1,23 +1,33 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const UserList = () => {
     const [users, setUsers] = useState([]);
     const navigate = useNavigate();
 
-    useEffect(() => {
-        fetchUsers();
-    }, []);
-
-    const fetchUsers = async () => {
+    const fetchUsers = React.useCallback(async () => {
         try {
             const response = await axios.get('/api/users');
-            setUsers(response.data);
+            return response.data;
         } catch (error) {
             console.error('Error fetching users:', error);
+            return null;
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        let isMounted = true;
+        const loadData = async () => {
+            const data = await fetchUsers();
+            if (isMounted && data) {
+                setUsers(data);
+            }
+        };
+        loadData();
+        return () => { isMounted = false; };
+    }, [fetchUsers]);
 
     const handleDelete = async (id) => {
         if (window.confirm('¿Está seguro de que desea eliminar este usuario?')) {
@@ -26,7 +36,7 @@ const UserList = () => {
                 setUsers(users.filter(user => user.id !== id));
             } catch (error) {
                 console.error('Error deleting user:', error);
-                alert('No se pudo eliminar el usuario.');
+                toast.error('No se pudo eliminar el usuario.');
             }
         }
     };
@@ -47,8 +57,8 @@ const UserList = () => {
                     <h1 style={styles.title}>Gestión de Usuarios</h1>
                     <p style={styles.subtitle}>{users.length} usuarios registrados en el sistema</p>
                 </div>
-                <button style={styles.addButton} onClick={() => navigate('/admin/users/add')}>
-                    <span style={{ marginRight: '8px' }}>👤+</span> Agregar Usuario
+                <button style={styles.addButton} onClick={() => navigate('/admin/users/add')} aria-label="Agregar nuevo usuario">
+                    <span style={{ marginRight: '8px' }} aria-hidden="true">👤+</span> Agregar Usuario
                 </button>
             </div>
             
@@ -70,7 +80,9 @@ const UserList = () => {
                                 <td style={styles.td}>{user.id}</td>
                                 <td style={styles.td}>
                                     <div style={styles.nameContainer}>
-                                        <div style={styles.avatar}>{user.firstName[0]}{user.lastName[0]}</div>
+                                        <div style={styles.avatar}>
+                                            {user.firstName?.[0]}{user.lastName?.[0]}
+                                        </div>
                                         <div>
                                             <div style={styles.fullName}>{user.firstName} {user.lastName}</div>
                                         </div>
@@ -87,15 +99,22 @@ const UserList = () => {
                                 </td>
                                 <td style={{ ...styles.td, textAlign: 'center' }}>
                                     <div style={styles.actions}>
-                                        <Link to={`/admin/qr/${user.id}`} target="_blank" style={styles.qrButton} title="Imprimir QR">
-                                            🖨️ QR
+                                        <Link
+                                            to={`/admin/qr/${user.id}`}
+                                            target="_blank"
+                                            style={styles.qrButton}
+                                            title="Imprimir QR"
+                                            aria-label="Imprimir QR de usuario"
+                                        >
+                                            <span aria-hidden="true">🖨️</span> QR
                                         </Link>
                                         <button 
                                             onClick={() => handleDelete(user.id)}
                                             style={styles.deleteButton}
                                             title="Eliminar Usuario"
+                                            aria-label="Eliminar Usuario"
                                         >
-                                            🗑️
+                                            <span aria-hidden="true">🗑️</span>
                                         </button>
                                     </div>
                                 </td>
@@ -110,7 +129,6 @@ const UserList = () => {
 
 const styles = {
     pageContainer: {
-        animation: 'fadeIn 0.5s ease-out',
     },
     header: {
         display: 'flex',
