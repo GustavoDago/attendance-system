@@ -75,7 +75,7 @@ Copy-Item $JAR_FILE.FullName (Join-Path $RELEASE_DIR "attendance-system.jar")
 
 # Crear el script de inicio para la notebook (.bat) sin BOM para que CMD lo reconozca
 $START_SCRIPT = Join-Path $RELEASE_DIR "iniciar-sistema.bat"
-$batContent = @"
+$batContent = @'
 @echo off
 title Sistema de Asistencia
 echo ========================================================
@@ -87,10 +87,13 @@ echo Puedes descargar Java desde: https://adoptium.net/es/
 echo.
 echo Presiona Ctrl+C para detener el servidor.
 echo.
-start http://localhost:8080/
+
+:: Iniciar un proceso en segundo plano que espere a que el puerto 8080 responda para abrir el navegador
+start "" /B powershell -Command "while ($true) { try { $t = New-Object System.Net.Sockets.TcpClient; $t.Connect('127.0.0.1', 8080); $t.Close(); break } catch { Start-Sleep -Seconds 1 } }; Start-Process 'http://localhost:8080/'"
+
+:: Iniciar Java en primer plano
 java -Xmx512m -jar attendance-system.jar --spring.profiles.active=notebook
-pause
-"@
+'@
 
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 [System.IO.File]::WriteAllText($START_SCRIPT, $batContent, $utf8NoBom)
