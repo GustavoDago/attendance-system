@@ -59,6 +59,12 @@ if (-not (Test-Path $DESTINATION_DIR)) {
 # Borrar el archivo JAR original/anterior en el destino si existe
 if (Test-Path $DESTINATION_JAR) {
     Write-Host "Borrando archivo JAR anterior en destino..." -ForegroundColor DarkYellow
+    Write-Host "Verificando si la aplicación está activa en V2 para detenerla..." -ForegroundColor DarkYellow
+    Get-CimInstance Win32_Process -Filter "name = 'java.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like "*attendance-system.jar*" } | ForEach-Object {
+        Write-Host "Deteniendo proceso de Java activo (PID: $($_.ProcessId))..." -ForegroundColor Red
+        Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+        Start-Sleep -Seconds 2
+    }
     Remove-Item -Force $DESTINATION_JAR
 }
 

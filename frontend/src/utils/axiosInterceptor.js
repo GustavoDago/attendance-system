@@ -19,11 +19,10 @@ const setupAxiosInterceptors = () => {
             return response;
         },
         (error) => {
-            if (error.response?.status === 401) {
-                // Handle unauthorized errors globally (e.g. redirect to login)
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                // Handle unauthorized/forbidden errors globally (e.g. redirect to login to trigger auto-login)
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
-                // Could refresh page if needed, but Context usually handles state
                 window.location.href = '/login';
             }
             return Promise.reject(error);

@@ -36,6 +36,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/**").authenticated() // All other APIs need authentication
                         .anyRequest().permitAll()) // All other routes (frontend assets/SPA routes) are public
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin())) // Required for H2 Console
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(new org.springframework.security.web.authentication.HttpStatusEntryPoint(org.springframework.http.HttpStatus.UNAUTHORIZED)))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
