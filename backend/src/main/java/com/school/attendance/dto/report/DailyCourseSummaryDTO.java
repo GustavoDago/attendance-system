@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class DailyCourseSummaryDTO {
-    private int presentCount;
-    private int absentCount;
+    private double presentCount;
+    private double absentCount;
     private int totalStudents;
 }

@@ -24,6 +24,7 @@ public class ActivityAttendanceController {
     private final StudentRepository studentRepository;
     private final SubjectRepository subjectRepository;
     private final CourseRepository courseRepository;
+    private final CourseScheduleRepository scheduleRepository;
 
     @GetMapping
     public List<ActivityAttendance> getAttendance(
@@ -55,11 +56,18 @@ public class ActivityAttendanceController {
             Student student = studentRepository.findById(studentId)
                     .orElseThrow(() -> new RuntimeException("Student not found: " + studentId));
 
-            // Determine active activities in this batch request for the student
-            Set<ActivityType> active = studentRecords.stream()
-                    .filter(r -> r.getStatus() != AttendanceStatus.NO_APLICA)
-                    .map(StudentStatusRecord::getActivityType)
-                    .collect(Collectors.toSet());
+            // Determine active activities from schedule for the student on this day
+            Set<ActivityType> active = new java.util.HashSet<>();
+            StudentCourse studentCourse = student.getStudentCourses().stream().findFirst().orElse(null);
+            if (studentCourse != null) {
+                active = scheduleRepository.findRelevantSchedules(
+                        studentCourse.getCourse(),
+                        date.getDayOfWeek(),
+                        studentCourse.getGroupNumber()
+                ).stream()
+                .map(CourseSchedule::getActivityType)
+                .collect(Collectors.toSet());
+            }
 
             if (active.contains(ActivityType.AULA) && active.contains(ActivityType.INSTITUCIONAL)) {
                 throw new RuntimeException("No pueden coexistir las actividades AULA e INSTITUCIONAL en el mismo día para un alumno (" 

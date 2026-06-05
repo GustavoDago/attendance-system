@@ -82,7 +82,9 @@ const MonthlyReportPage = () => {
             daysArray.forEach(day => {
                 const dt = dailyTotals[day];
                 if (dt && dt.totalStudents > 0) {
-                    totalsRow[day] = `P:${dt.presentCount} A:${dt.absentCount}`;
+                    const p = +dt.presentCount.toFixed(2);
+                    const a = +dt.absentCount.toFixed(2);
+                    totalsRow[day] = `P:${p} A:${a}`;
                 } else {
                     totalsRow[day] = '';
                 }
@@ -211,7 +213,7 @@ const MonthlyReportPage = () => {
                             <div style={styles.statsGrid}>
                                 <div style={{...styles.statCard, borderLeft: '4px solid #10b981'}}>
                                     <span style={styles.statTitle}>Total de Asistencias</span>
-                                    <span style={styles.statValue}>{totalAsistencias}</span>
+                                    <span style={styles.statValue}>{+totalAsistencias.toFixed(2)}</span>
                                     <span style={styles.statSubtitle}>Presencias registradas en el mes</span>
                                 </div>
                                 <div style={{...styles.statCard, borderLeft: '4px solid #ef4444'}}>
@@ -302,8 +304,8 @@ const MonthlyReportPage = () => {
                                             }
                                             return (
                                                 <td key={day} style={styles.tdTotalsDay}>
-                                                    <div style={styles.totalsPresent}>{dt.presentCount}</div>
-                                                    <div style={styles.totalsAbsent}>{dt.absentCount}</div>
+                                                    <div style={styles.totalsPresent}>{+dt.presentCount.toFixed(2)}</div>
+                                                    <div style={styles.totalsAbsent}>{+dt.absentCount.toFixed(2)}</div>
                                                 </td>
                                             );
                                         })}

@@ -15,6 +15,7 @@ import java.util.Optional;
 public interface CourseScheduleRepository extends JpaRepository<CourseSchedule, Long> {
     List<CourseSchedule> findByCourseAndDayOfWeekAndGroupNumber(Course course, DayOfWeek dayOfWeek, String groupNumber);
     List<CourseSchedule> findByCourseAndDayOfWeek(Course course, DayOfWeek dayOfWeek);
+    List<CourseSchedule> findByCourse(Course course);
     
     @Query("SELECT cs FROM CourseSchedule cs WHERE cs.course = :course AND cs.dayOfWeek = :dayOfWeek " +
            "AND (cs.groupNumber = :groupNumber OR cs.groupNumber IS NULL) " +

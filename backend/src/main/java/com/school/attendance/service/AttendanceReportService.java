@@ -32,14 +32,25 @@ public class AttendanceReportService {
     public double calculateTotalAbsences(Student student, LocalDate start, LocalDate end) {
         List<ActivityAttendance> records = attendanceRepository.findByStudentAndDateBetween(student, start, end);
         
-        // Group by date to avoid N+1 queries when calculating weights
-        Map<LocalDate, List<ActivityAttendance>> dailyRecordsMap = records.stream()
-                .collect(Collectors.groupingBy(ActivityAttendance::getDate));
+        StudentCourse studentCourse = student.getStudentCourses().stream()
+                .findFirst()
+                .orElse(null);
+        if (studentCourse == null) {
+            return 0.0;
+        }
+
+        // Fetch schedules for the course once to avoid N+1 queries
+        List<CourseSchedule> courseSchedules = scheduleRepository.findByCourse(studentCourse.getCourse());
 
         double total = 0;
         for (ActivityAttendance record : records) {
-            List<ActivityAttendance> dailyRecords = dailyRecordsMap.get(record.getDate());
-            total += calculateRecordWeight(record, dailyRecords);
+            Set<ActivityType> active = courseSchedules.stream()
+                    .filter(cs -> cs.getDayOfWeek() == record.getDate().getDayOfWeek() &&
+                            (cs.getGroupNumber() == null || cs.getGroupNumber().equals(studentCourse.getGroupNumber())))
+                    .map(CourseSchedule::getActivityType)
+                    .collect(Collectors.toSet());
+
+            total += calculateRecordWeight(record, active);
         }
         return total;
     }
@@ -48,9 +59,21 @@ public class AttendanceReportService {
      * Calcula el peso de un registro individual basado en las actividades activas del día.
      */
     public double calculateRecordWeight(ActivityAttendance record) {
-        List<ActivityAttendance> dailyRecords = attendanceRepository.findByStudentAndDateBetween(
-                record.getStudent(), record.getDate(), record.getDate());
-        return calculateRecordWeight(record, dailyRecords);
+        StudentCourse studentCourse = record.getStudent().getStudentCourses().stream()
+                .findFirst()
+                .orElse(null);
+        if (studentCourse == null) {
+            return 0.0;
+        }
+        List<CourseSchedule> schedules = scheduleRepository.findRelevantSchedules(
+                studentCourse.getCourse(),
+                record.getDate().getDayOfWeek(),
+                studentCourse.getGroupNumber()
+        );
+        Set<ActivityType> active = schedules.stream()
+                .map(CourseSchedule::getActivityType)
+                .collect(Collectors.toSet());
+        return calculateRecordWeight(record, active);
     }
 
     public double calculateRecordWeight(ActivityAttendance record, List<ActivityAttendance> dailyRecords) {
@@ -69,6 +92,23 @@ public class AttendanceReportService {
 
         // Si por alguna razón la actividad actual no está activa, no genera falta
         if (!active.contains(record.getActivityType())) {
+            return 0.0;
+        }
+
+        double baseWeight = getBaseWeight(record.getActivityType(), active);
+        return status.getDefaultWeight() * baseWeight;
+    }
+
+    public double calculateRecordWeight(ActivityAttendance record, Set<ActivityType> active) {
+        AttendanceStatus status = record.getStatus();
+
+        // Presente y No Aplica no generan falta
+        if (status.isPresent()) {
+            return 0.0;
+        }
+
+        // Si por alguna razón la actividad actual no está activa, no genera falta
+        if (active == null || !active.contains(record.getActivityType())) {
             return 0.0;
         }
 
@@ -133,9 +173,27 @@ public class AttendanceReportService {
         // Track daily totals for the whole course
         Map<Integer, DailyCourseSummaryDTO> dailyTotals = new java.util.HashMap<>();
 
+        // Initialize maps to calculate daily totals based on actual weights
+        Map<Integer, Double> dailyPresentWeights = new java.util.HashMap<>();
+        Map<Integer, Double> dailyAbsentWeights = new java.util.HashMap<>();
+        Map<Integer, Set<Long>> dailyRegisteredStudents = new java.util.HashMap<>();
+        for (int day = 1; day <= daysInMonth; day++) {
+            dailyPresentWeights.put(day, 0.0);
+            dailyAbsentWeights.put(day, 0.0);
+            dailyRegisteredStudents.put(day, new java.util.HashSet<>());
+        }
+
+        // Fetch schedules for the course once to avoid N+1 queries
+        List<CourseSchedule> courseSchedules = scheduleRepository.findByCourse(course);
+
         List<com.school.attendance.dto.report.StudentMonthlyReportDTO> studentReports = students.stream().map(student -> {
             Map<Integer, com.school.attendance.dto.report.DailySummaryDTO> dailyRecords = new java.util.HashMap<>();
             
+            // Get student's course assignment to know their group number
+            StudentCourse sc = student.getStudentCourses().stream()
+                    .filter(c -> c.getCourse().getId().equals(courseId))
+                    .findFirst().orElse(null);
+
             for (int day = 1; day <= daysInMonth; day++) {
                 LocalDate currentDate = LocalDate.of(year, month, day);
                 
@@ -150,15 +208,37 @@ public class AttendanceReportService {
                     continue;
                 }
                 
+                // Determine active activities from schedule for the student on this day of the week
+                final StudentCourse currentSc = sc;
+                final Set<ActivityType> active = (currentSc == null) ? java.util.Collections.emptySet() :
+                        courseSchedules.stream()
+                            .filter(cs -> cs.getDayOfWeek() == currentDate.getDayOfWeek() &&
+                                    (cs.getGroupNumber() == null || cs.getGroupNumber().equals(currentSc.getGroupNumber())))
+                            .map(CourseSchedule::getActivityType)
+                            .collect(Collectors.toSet());
+
                 List<ActivityAttendance> dailyAttendances = attendanceRepository.findByStudentAndDateBetween(student, currentDate, currentDate);
-                if (dailyAttendances.isEmpty()) {
+                if (dailyAttendances.isEmpty() || active.isEmpty()) {
                     dailyRecords.put(day, new com.school.attendance.dto.report.DailySummaryDTO("-", 0.0));
                     continue;
                 }
 
                 double dailyAbsence = 0.0;
+                double dailyPresence = 0.0;
+                boolean hasRegisteredActivity = false;
                 for (ActivityAttendance record : dailyAttendances) {
-                    dailyAbsence += calculateRecordWeight(record, dailyAttendances);
+                    if (active.contains(record.getActivityType())) {
+                        double baseWeight = getBaseWeight(record.getActivityType(), active);
+                        dailyAbsence += record.getStatus().getDefaultWeight() * baseWeight;
+                        dailyPresence += (1.0 - record.getStatus().getDefaultWeight()) * baseWeight;
+                        hasRegisteredActivity = true;
+                    }
+                }
+
+                if (hasRegisteredActivity) {
+                    dailyPresentWeights.put(day, dailyPresentWeights.get(day) + dailyPresence);
+                    dailyAbsentWeights.put(day, dailyAbsentWeights.get(day) + dailyAbsence);
+                    dailyRegisteredStudents.get(day).add(student.getId());
                 }
 
                 // Build the label using the status label from the first significant record
@@ -168,6 +248,7 @@ public class AttendanceReportService {
                 } else {
                     // Find the most significant status for display
                     AttendanceStatus mainStatus = dailyAttendances.stream()
+                            .filter(r -> active.contains(r.getActivityType()))
                             .map(ActivityAttendance::getStatus)
                             .filter(s -> !s.isPresent())
                             .findFirst()
@@ -181,10 +262,6 @@ public class AttendanceReportService {
             double monthlyTotal = calculateTotalAbsences(student, startDate, endDate);
             double annualTotal = calculateTotalAbsences(student, annualStart, endDate);
 
-            StudentCourse sc = student.getStudentCourses().stream()
-                    .filter(c -> c.getCourse().getId().equals(courseId))
-                    .findFirst().orElse(null);
-            
             String orderNum = (sc != null && sc.getOrderNumber() != null) ? String.valueOf(sc.getOrderNumber()) : "";
 
             return com.school.attendance.dto.report.StudentMonthlyReportDTO.builder()
@@ -204,37 +281,25 @@ public class AttendanceReportService {
             
             if (currentDate.getDayOfWeek() == DayOfWeek.SATURDAY || currentDate.getDayOfWeek() == DayOfWeek.SUNDAY) {
                 dailyTotals.put(day, DailyCourseSummaryDTO.builder()
-                        .presentCount(0).absentCount(0).totalStudents(0).build());
+                        .presentCount(0.0).absentCount(0.0).totalStudents(0).build());
                 continue;
             }
             
             boolean isHoliday = holidays.stream().anyMatch(h -> h.getDate().equals(currentDate));
             if (isHoliday) {
                 dailyTotals.put(day, DailyCourseSummaryDTO.builder()
-                        .presentCount(0).absentCount(0).totalStudents(0).build());
+                        .presentCount(0.0).absentCount(0.0).totalStudents(0).build());
                 continue;
             }
 
-            int presentCount = 0;
-            int absentCount = 0;
-            
-            for (com.school.attendance.dto.report.StudentMonthlyReportDTO studentReport : studentReports) {
-                com.school.attendance.dto.report.DailySummaryDTO dailySummary = studentReport.getDailyRecords().get(day);
-                if (dailySummary == null || "-".equals(dailySummary.getStatusLabel()) || "H".equals(dailySummary.getStatusLabel())) {
-                    continue;
-                }
-                
-                if ("P".equals(dailySummary.getStatusLabel())) {
-                    presentCount++;
-                } else {
-                    absentCount++;
-                }
-            }
+            double presentWeight = dailyPresentWeights.getOrDefault(day, 0.0);
+            double absentWeight = dailyAbsentWeights.getOrDefault(day, 0.0);
+            int studentCount = dailyRegisteredStudents.getOrDefault(day, java.util.Collections.emptySet()).size();
             
             dailyTotals.put(day, DailyCourseSummaryDTO.builder()
-                    .presentCount(presentCount)
-                    .absentCount(absentCount)
-                    .totalStudents(presentCount + absentCount)
+                    .presentCount(presentWeight)
+                    .absentCount(absentWeight)
+                    .totalStudents(studentCount)
                     .build());
         }
 
