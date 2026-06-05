@@ -46,6 +46,7 @@ const AdminLayout = () => {
                         onClick={() => setIsCollapsed(!isCollapsed)} 
                         style={styles.toggleBtn}
                         title={isCollapsed ? "Expandir" : "Colapsar"}
+                        aria-label={isCollapsed ? "Expandir menú lateral" : "Colapsar menú lateral"}
                     >
                         {isCollapsed ? '→' : '←'}
                     </button>
@@ -88,7 +89,9 @@ const AdminLayout = () => {
                 </div>
             </div>
             <div style={styles.content}>
-                <Outlet />
+                <div key={location.pathname} style={{ animation: 'fadeIn 0.5s ease-out' }}>
+                    <Outlet />
+                </div>
             </div>
         </div>
     );
