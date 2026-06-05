@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/activity-attendance")
@@ -41,61 +44,70 @@ public class ActivityAttendanceController {
         Long subjectId = request.getSubjectId();
         Subject subject = subjectId != null ? subjectRepository.findById(subjectId).orElse(null) : null;
         
-        for (StudentStatusRecord r : request.getRecords()) {
-            Student student = studentRepository.findById(r.getStudentId())
-                    .orElseThrow(() -> new RuntimeException("Student not found"));
+        // Group records by studentId to validate and calculate weights
+        Map<Long, List<StudentStatusRecord>> recordsByStudent = request.getRecords().stream()
+                .collect(Collectors.groupingBy(StudentStatusRecord::getStudentId));
 
-            // Validation: Taller was restricted to 4th year and above, but since lower years can also have scheduled talleres, we allow it.
-            
-            ActivityAttendance attendance = repository.findByStudentAndDateAndActivityType(student, date, r.getActivityType())
-                    .orElse(ActivityAttendance.builder()
-                            .student(student)
-                            .date(date)
-                            .activityType(r.getActivityType())
-                            .build());
-            
-            attendance.setStatus(r.getStatus());
-            attendance.setSubject(subject);
-            attendance.setCalculatedAbsence(calculateAbsenceWeight(r.getActivityType(), r.getStatus()));
-            
-            repository.save(attendance);
+        for (Map.Entry<Long, List<StudentStatusRecord>> entry : recordsByStudent.entrySet()) {
+            Long studentId = entry.getKey();
+            List<StudentStatusRecord> studentRecords = entry.getValue();
+
+            Student student = studentRepository.findById(studentId)
+                    .orElseThrow(() -> new RuntimeException("Student not found: " + studentId));
+
+            // Determine active activities in this batch request for the student
+            Set<ActivityType> active = studentRecords.stream()
+                    .filter(r -> r.getStatus() != AttendanceStatus.NO_APLICA)
+                    .map(StudentStatusRecord::getActivityType)
+                    .collect(Collectors.toSet());
+
+            if (active.contains(ActivityType.AULA) && active.contains(ActivityType.INSTITUCIONAL)) {
+                throw new RuntimeException("No pueden coexistir las actividades AULA e INSTITUCIONAL en el mismo día para un alumno (" 
+                        + student.getLastName() + ", " + student.getFirstName() + ").");
+            }
+
+            for (StudentStatusRecord r : studentRecords) {
+                ActivityAttendance attendance = repository.findByStudentAndDateAndActivityType(student, date, r.getActivityType())
+                        .orElse(ActivityAttendance.builder()
+                                .student(student)
+                                .date(date)
+                                .activityType(r.getActivityType())
+                                .build());
+
+                attendance.setStatus(r.getStatus());
+                attendance.setSubject(subject);
+
+                // Calculate weight using the active set
+                double calculatedAbsence = 0.0;
+                if (!r.getStatus().isPresent() && active.contains(r.getActivityType())) {
+                    double baseWeight = getBaseWeight(r.getActivityType(), active);
+                    calculatedAbsence = r.getStatus().getDefaultWeight() * baseWeight;
+                }
+                attendance.setCalculatedAbsence(calculatedAbsence);
+
+                repository.save(attendance);
+            }
         }
 
         return ResponseEntity.ok("Registros guardados correctamente");
     }
 
-    private Double calculateAbsenceWeight(ActivityType type, AttendanceStatus status) {
-        if (status == AttendanceStatus.PRESENTE || status == AttendanceStatus.NO_APLICA) return 0.0;
-        
-        // Ausente (justificada o no) — el peso depende del tipo de actividad
-        if (status == AttendanceStatus.AUSENTE || status == AttendanceStatus.AUSENTE_J) {
-            return switch (type) {
-                case AULA -> 1.0;
-                case TALLER, EDUCACION_FISICA -> 0.5;
-                default -> 0.0;
-            };
+    private double getBaseWeight(ActivityType type, Set<ActivityType> active) {
+        boolean hasTaller = active.contains(ActivityType.TALLER);
+        boolean hasEdFisica = active.contains(ActivityType.EDUCACION_FISICA);
+
+        double aulaWeight = 1.0;
+        if (hasTaller || hasEdFisica) {
+            aulaWeight = 0.5;
         }
-        
-        // Tardanza 1/4 (justificada o no)
-        if (status == AttendanceStatus.TARDANZA_1_4 || status == AttendanceStatus.TARDANZA_1_4_J) {
-            return 0.25;
+
+        if (type == ActivityType.AULA || type == ActivityType.INSTITUCIONAL) {
+            return aulaWeight;
+        } else if (type == ActivityType.TALLER) {
+            return hasEdFisica ? 0.25 : 0.5;
+        } else if (type == ActivityType.EDUCACION_FISICA) {
+            return hasTaller ? 0.25 : 0.5;
         }
-        
-        // Tardanza 1/2 (justificada o no)
-        if (status == AttendanceStatus.TARDANZA_1_2 || status == AttendanceStatus.TARDANZA_1_2_J) {
-            return 0.5;
-        }
-        
-        // Retiro 1/2 (justificado o no)
-        if (status == AttendanceStatus.RETIRO_1_2 || status == AttendanceStatus.RETIRO_1_2_J) {
-            return 0.5;
-        }
-        
-        // Retiro 1/4 (justificado o no)
-        if (status == AttendanceStatus.RETIRO_1_4 || status == AttendanceStatus.RETIRO_1_4_J) {
-            return 0.25;
-        }
-        
         return 0.0;
     }
 

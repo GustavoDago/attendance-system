@@ -11,6 +11,9 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,18 +32,28 @@ public class AttendanceReportService {
     public double calculateTotalAbsences(Student student, LocalDate start, LocalDate end) {
         List<ActivityAttendance> records = attendanceRepository.findByStudentAndDateBetween(student, start, end);
         
+        // Group by date to avoid N+1 queries when calculating weights
+        Map<LocalDate, List<ActivityAttendance>> dailyRecordsMap = records.stream()
+                .collect(Collectors.groupingBy(ActivityAttendance::getDate));
+
         double total = 0;
         for (ActivityAttendance record : records) {
-            total += calculateRecordWeight(record);
+            List<ActivityAttendance> dailyRecords = dailyRecordsMap.get(record.getDate());
+            total += calculateRecordWeight(record, dailyRecords);
         }
         return total;
     }
 
     /**
-     * Calcula el peso de un registro individual basado en la normativa Res. 1650/2024.
-     * Los estados justificados (_J) cuentan con el mismo peso que los injustificados.
+     * Calcula el peso de un registro individual basado en las actividades activas del día.
      */
     public double calculateRecordWeight(ActivityAttendance record) {
+        List<ActivityAttendance> dailyRecords = attendanceRepository.findByStudentAndDateBetween(
+                record.getStudent(), record.getDate(), record.getDate());
+        return calculateRecordWeight(record, dailyRecords);
+    }
+
+    public double calculateRecordWeight(ActivityAttendance record, List<ActivityAttendance> dailyRecords) {
         AttendanceStatus status = record.getStatus();
 
         // Presente y No Aplica no generan falta
@@ -48,46 +61,37 @@ public class AttendanceReportService {
             return 0.0;
         }
 
-        // Tardanza 1/4 (justificada o no)
-        if (status == AttendanceStatus.TARDANZA_1_4 || status == AttendanceStatus.TARDANZA_1_4_J) {
-            return 0.25;
+        // Determinar las actividades activas en el día
+        Set<ActivityType> active = dailyRecords.stream()
+                .filter(r -> r.getStatus() != AttendanceStatus.NO_APLICA)
+                .map(ActivityAttendance::getActivityType)
+                .collect(Collectors.toSet());
+
+        // Si por alguna razón la actividad actual no está activa, no genera falta
+        if (!active.contains(record.getActivityType())) {
+            return 0.0;
         }
 
-        // Tardanza 1/2 (justificada o no)
-        if (status == AttendanceStatus.TARDANZA_1_2 || status == AttendanceStatus.TARDANZA_1_2_J) {
-            return 0.50;
+        double baseWeight = getBaseWeight(record.getActivityType(), active);
+        return status.getDefaultWeight() * baseWeight;
+    }
+
+    private double getBaseWeight(ActivityType type, Set<ActivityType> active) {
+        boolean hasTaller = active.contains(ActivityType.TALLER);
+        boolean hasEdFisica = active.contains(ActivityType.EDUCACION_FISICA);
+
+        double aulaWeight = 1.0;
+        if (hasTaller || hasEdFisica) {
+            aulaWeight = 0.5;
         }
 
-        // Retiro 1/2 (justificado o no)
-        if (status == AttendanceStatus.RETIRO_1_2 || status == AttendanceStatus.RETIRO_1_2_J) {
-            return 0.50;
+        if (type == ActivityType.AULA || type == ActivityType.INSTITUCIONAL) {
+            return aulaWeight;
+        } else if (type == ActivityType.TALLER) {
+            return hasEdFisica ? 0.25 : 0.5;
+        } else if (type == ActivityType.EDUCACION_FISICA) {
+            return hasTaller ? 0.25 : 0.5;
         }
-
-        // Retiro 1/4 (justificado o no)
-        if (status == AttendanceStatus.RETIRO_1_4 || status == AttendanceStatus.RETIRO_1_4_J) {
-            return 0.25;
-        }
-
-        // Ausente (justificada o no) — peso depende del turno/actividades del día
-        if (status == AttendanceStatus.AUSENTE || status == AttendanceStatus.AUSENTE_J) {
-            // Obtener configuración del día para el curso y grupo del alumno
-            StudentCourse studentCourse = record.getStudent().getStudentCourses().get(0);
-            Course course = studentCourse.getCourse();
-            String groupNumber = studentCourse.getGroupNumber();
-            DayOfWeek day = record.getDate().getDayOfWeek();
-            
-            // Buscar horario específico del grupo o general del curso
-            List<CourseSchedule> schedules = scheduleRepository.findRelevantSchedules(course, day, groupNumber);
-            
-            int activityCount = schedules.isEmpty() ? 1 : schedules.size();
-
-            if (activityCount == 1) {
-                return 1.0;
-            } else {
-                return 0.5;
-            }
-        }
-
         return 0.0;
     }
 
@@ -154,7 +158,7 @@ public class AttendanceReportService {
 
                 double dailyAbsence = 0.0;
                 for (ActivityAttendance record : dailyAttendances) {
-                    dailyAbsence += calculateRecordWeight(record);
+                    dailyAbsence += calculateRecordWeight(record, dailyAttendances);
                 }
 
                 // Build the label using the status label from the first significant record
