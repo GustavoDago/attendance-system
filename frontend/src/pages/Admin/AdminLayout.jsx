@@ -46,6 +46,7 @@ const AdminLayout = () => {
                         onClick={() => setIsCollapsed(!isCollapsed)} 
                         style={styles.toggleBtn}
                         title={isCollapsed ? "Expandir" : "Colapsar"}
+                        aria-label={isCollapsed ? "Expandir menú lateral" : "Colapsar menú lateral"}
                     >
                         {isCollapsed ? '→' : '←'}
                     </button>
@@ -58,6 +59,7 @@ const AdminLayout = () => {
                             <li key={item.path} style={styles.navItem}>
                                 <Link 
                                     to={item.path} 
+                                    aria-label={item.label}
                                     style={{
                                         ...styles.link,
                                         backgroundColor: isActive ? 'rgba(255,255,255,0.1)' : 'transparent',
@@ -65,7 +67,12 @@ const AdminLayout = () => {
                                         padding: isCollapsed ? '12px 0' : '12px 15px',
                                     }}
                                 >
-                                    <span style={styles.icon}>{item.icon}</span>
+                                    <span
+                                        style={{...styles.icon, marginRight: isCollapsed ? '0' : '12px'}}
+                                        aria-hidden="true"
+                                    >
+                                        {item.icon}
+                                    </span>
                                     {!isCollapsed && <span style={styles.label}>{item.label}</span>}
                                 </Link>
                             </li>
@@ -75,6 +82,7 @@ const AdminLayout = () => {
                 <div style={styles.footer}>
                     <button 
                         onClick={handleLogout} 
+                        aria-label="Cerrar Sesión"
                         style={{
                             ...styles.logoutBtn,
                             justifyContent: isCollapsed ? 'center' : 'flex-start',
@@ -82,13 +90,15 @@ const AdminLayout = () => {
                         }}
                         title="Cerrar Sesión"
                     >
-                        <span style={{...styles.icon, marginRight: isCollapsed ? '0' : '12px'}}>🚪</span>
+                        <span style={{...styles.icon, marginRight: isCollapsed ? '0' : '12px'}} aria-hidden="true">🚪</span>
                         {!isCollapsed && <span style={styles.label}>Cerrar Sesión</span>}
                     </button>
                 </div>
             </div>
             <div style={styles.content}>
-                <Outlet />
+                <div key={location.pathname} style={{ animation: 'fadeIn 0.3s ease-out' }}>
+                    <Outlet />
+                </div>
             </div>
         </div>
     );

@@ -5,3 +5,7 @@
 ## 2025-05-16 - Real-time Scanner Feedback and Accessibility
 **Learning:** QR scanners often fail to provide immediate confirmation after a scan, leading to user confusion or double scans. Assistive technologies also need explicit ARIA live regions to announce scan results that appear dynamically.
 **Action:** Implement a "Processing" state to hide the camera and show progress immediately after a successful scan. Use `role="alert"` and `aria-live="assertive"` on result containers to ensure results are announced by screen readers.
+
+## 2025-05-17 - Sidebar Accessibility and Navigation Polish
+**Learning:** Collapsible sidebars often transition to icon-only states without providing text alternatives, making them inaccessible to screen readers. Additionally, static route transitions can feel abrupt compared to modern SPA expectations.
+**Action:** Always provide `aria-label` on navigation links in collapsed states and use `aria-hidden="true"` on decorative emojis. Implement a global `fadeIn` animation using React Router's `key` prop on a wrapper around `<Outlet />` to ensure smooth, accessible page transitions.
