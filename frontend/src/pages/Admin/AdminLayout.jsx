@@ -59,7 +59,6 @@ const AdminLayout = () => {
                             <li key={item.path} style={styles.navItem}>
                                 <Link 
                                     to={item.path} 
-                                    aria-label={item.label}
                                     style={{
                                         ...styles.link,
                                         backgroundColor: isActive ? 'rgba(255,255,255,0.1)' : 'transparent',
@@ -83,7 +82,6 @@ const AdminLayout = () => {
                 <div style={styles.footer}>
                     <button 
                         onClick={handleLogout} 
-                        aria-label="Cerrar Sesión"
                         style={{
                             ...styles.logoutBtn,
                             justifyContent: isCollapsed ? 'center' : 'flex-start',
