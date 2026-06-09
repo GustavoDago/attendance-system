@@ -133,18 +133,39 @@ const Scanner = () => {
 
     }, [type, navigate, resetInactivityTimeout]);
 
-    return (
-        <div className="kiosk-mode" style={styles.container}>
-            <h1 style={styles.title}>Escaneando para: {type === 'ENTRY' ? 'INGRESO' : 'EGRESO'}</h1>
+    const containerStyle = {
+        ...styles.container,
+        backgroundColor: type === 'ENTRY' ? '#e8f5e9' : '#ffebee'
+    };
 
-            <div id="reader" style={{ width: '500px', display: (message || processing) ? 'none' : 'block' }}></div>
+    return (
+        <div className="kiosk-mode" style={containerStyle}>
+            <h1 style={styles.title}>
+                <span aria-hidden="true" style={{ marginRight: '10px' }}>
+                    {type === 'ENTRY' ? '➡️' : '⬅️'}
+                </span>
+                Escaneando para: {type === 'ENTRY' ? 'INGRESO' : 'EGRESO'}
+            </h1>
+
+            <div
+                id="reader"
+                style={{
+                    width: '100%',
+                    maxWidth: '500px',
+                    display: (message || processing) ? 'none' : 'block',
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
+                }}
+            ></div>
 
             {processing && !message && (
                 <div
-                    style={styles.message}
+                    style={{ ...styles.message, backgroundColor: '#2196F3' }}
                     role="alert"
                     aria-live="assertive"
                 >
+                    <span aria-hidden="true" style={{ marginRight: '10px' }}>⏳</span>
                     Procesando...
                 </div>
             )}
@@ -159,12 +180,20 @@ const Scanner = () => {
                     role="alert"
                     aria-live="assertive"
                 >
+                    <span aria-hidden="true" style={{ marginRight: '10px' }}>
+                        {message.type === 'success' ? '✅' : message.type === 'warning' ? '⚠️' : '❌'}
+                    </span>
                     {message.text}
                 </div>
             )}
 
-            <button style={styles.button} onClick={returnHome}>
-                Cancelar
+            <button
+                style={styles.button}
+                onClick={returnHome}
+                aria-label="Volver al inicio"
+            >
+                <span aria-hidden="true" style={{ marginRight: '8px' }}>🏠</span>
+                Volver
             </button>
         </div>
     );
@@ -177,8 +206,8 @@ const styles = {
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '100vh',
-        backgroundColor: '#f5f5f5',
         padding: '20px',
+        transition: 'background-color 0.5s ease',
     },
     title: {
         marginBottom: '20px',

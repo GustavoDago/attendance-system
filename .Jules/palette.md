@@ -13,3 +13,7 @@
 ## 2026-06-06 - Sidebar Accessibility for Collapsible Navigation
 **Learning:** Collapsible sidebars often fail to provide descriptive labels for navigation items when reduced to icons. Decorative characters (like toggle arrows) and emojis can also create noise for screen readers if not explicitly hidden or labeled.
 **Action:** Always provide `aria-label` for navigation links and buttons that may be reduced to icons. Use `aria-hidden="true"` on decorative elements (emojis, symbols) within interactive components to ensure a clean experience for assistive technologies.
+
+## 2026-06-09 - Build Constraints and Scanner UX
+**Learning:** Duplicate aria-label attributes on a single JSX element will cause the production build (pnpm build) to fail. In kiosk modes, users benefit from immediate visual context (background colors) and directional icons (arrows) to confirm they are in the correct scanning flow.
+**Action:** Ensure only one aria-label exists per element. Use dynamic background colors and status icons (emojis with aria-hidden) to improve clarity and accessibility in high-traffic kiosk environments.
