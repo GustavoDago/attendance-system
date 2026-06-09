@@ -7,5 +7,5 @@
 **Action:** Implement a "Processing" state to hide the camera and show progress immediately after a successful scan. Use `role="alert"` and `aria-live="assertive"` on result containers to ensure results are announced by screen readers.
 
 ## 2025-05-17 - Centralized Layout Transitions and Sidebar Accessibility
-**Learning:** Transition animations are best handled at the layout level using route keys to avoid component-level duplication. Collapsed sidebars with icon-only buttons require explicit ARIA labels and decorative icon silencing to remain accessible to screen reader users.
-**Action:** Apply `fadeIn` animations to the main container in the layout using `key={location.pathname}`. Always add `aria-label` to links in collapsed sidebars and use `aria-hidden="true"` on decorative emojis/icons.
+**Learning:** Transition animations are best handled at the layout level using route keys to avoid component-level duplication. Collapsible sidebars often transition to icon-only states without providing text alternatives, making them inaccessible to screen readers.
+**Action:** Always provide `aria-label` on navigation links in collapsed states and use `aria-hidden="true"` on decorative emojis. Apply `fadeIn` animations to the main container in the layout using `key={location.pathname}` to ensure smooth, accessible page transitions.
