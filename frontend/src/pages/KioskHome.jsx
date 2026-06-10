@@ -68,15 +68,17 @@ const KioskHome = () => {
             <button
               style={{ ...currentStyles.actionButton, backgroundColor: '#4CAF50' }}
               onClick={() => navigate('/scan/ENTRY')}
+              aria-label="INGRESAR - Registrar ingreso"
             >
-              INGRESAR
+              <span aria-hidden="true">➡️</span> INGRESAR
             </button>
 
             <button
               style={{ ...currentStyles.actionButton, backgroundColor: '#f44336' }}
               onClick={() => navigate('/scan/EXIT')}
+              aria-label="EGRESAR - Registrar egreso"
             >
-              EGRESAR
+              <span aria-hidden="true">⬅️</span> EGRESAR
             </button>
           </div>
         </div>
@@ -167,6 +169,10 @@ const desktopStyles = {
     width: '100%',
     boxShadow: '0 8px 16px rgba(0,0,0,0.2)',
     transition: 'transform 0.1s',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '1rem',
   },
   fullscreenBtn: {
     position: 'absolute',
@@ -258,6 +264,7 @@ const mobileStyles = {
     alignItems: 'center',
     justifyContent: 'center',
     textTransform: 'uppercase',
+    gap: '1rem',
   },
   footer: {
     width: '100%',

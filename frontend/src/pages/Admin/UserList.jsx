@@ -102,15 +102,22 @@ const UserList = () => {
                                 </td>
                                 <td style={{ ...styles.td, textAlign: 'center' }}>
                                     <div style={styles.actions}>
-                                        <Link to={`/admin/qr/${user.id}`} target="_blank" style={styles.qrButton} title="Imprimir QR">
-                                            🖨️ QR
+                                        <Link
+                                            to={`/admin/qr/${user.id}`}
+                                            target="_blank"
+                                            style={styles.qrButton}
+                                            title="Imprimir QR"
+                                            aria-label="Imprimir QR de usuario"
+                                        >
+                                            <span aria-hidden="true">🖨️</span> QR
                                         </Link>
                                         <button 
                                             onClick={() => handleDelete(user.id)}
                                             style={styles.deleteButton}
                                             title="Eliminar Usuario"
+                                            aria-label="Eliminar usuario"
                                         >
-                                            🗑️
+                                            <span aria-hidden="true">🗑️</span>
                                         </button>
                                     </div>
                                 </td>
