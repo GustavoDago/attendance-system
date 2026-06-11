@@ -13,3 +13,7 @@
 ## 2026-06-06 - Sidebar Accessibility for Collapsible Navigation
 **Learning:** Collapsible sidebars often fail to provide descriptive labels for navigation items when reduced to icons. Decorative characters (like toggle arrows) and emojis can also create noise for screen readers if not explicitly hidden or labeled.
 **Action:** Always provide `aria-label` for navigation links and buttons that may be reduced to icons. Use `aria-hidden="true"` on decorative elements (emojis, symbols) within interactive components to ensure a clean experience for assistive technologies.
+
+## 2026-06-11 - Build Constraints and Sidebar Accessibility
+**Learning:** Duplicate JSX attributes (like `aria-label`) are not always caught in dev mode but will cause production build failures in Vite/ESBuild. Additionally, maintaining `aria-label` on collapsed navigation items is critical for screen reader users when visible labels are hidden.
+**Action:** Always verify changes with `pnpm build` to catch duplicate attributes early. Never remove `aria-label` from interactive elements that may lose their visible text (e.g., in responsive or collapsed states).
