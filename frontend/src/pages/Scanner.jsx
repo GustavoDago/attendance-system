@@ -133,15 +133,32 @@ const Scanner = () => {
 
     }, [type, navigate, resetInactivityTimeout]);
 
-    return (
-        <div className="kiosk-mode" style={styles.container}>
-            <h1 style={styles.title}>Escaneando para: {type === 'ENTRY' ? 'INGRESO' : 'EGRESO'}</h1>
+    const containerStyle = {
+        ...styles.container,
+        backgroundColor: type === 'ENTRY' ? '#e8f5e9' : '#ffebee'
+    };
 
-            <div id="reader" style={{ width: '500px', display: (message || processing) ? 'none' : 'block' }}></div>
+    return (
+        <div className="kiosk-mode" style={containerStyle}>
+            <h1 style={styles.title}>
+                <span aria-hidden="true" style={{ marginRight: '10px' }}>
+                    {type === 'ENTRY' ? '➡️' : '⬅️'}
+                </span>
+                Escaneando para: {type === 'ENTRY' ? 'INGRESO' : 'EGRESO'}
+            </h1>
+
+            <div
+                id="reader"
+                style={{
+                    width: '100%',
+                    maxWidth: '500px',
+                    display: (message || processing) ? 'none' : 'block'
+                }}
+            ></div>
 
             {processing && !message && (
                 <div
-                    style={styles.message}
+                    style={{ ...styles.message, animation: 'fadeIn 0.3s ease-out' }}
                     role="alert"
                     aria-live="assertive"
                 >
@@ -154,11 +171,15 @@ const Scanner = () => {
                     style={{
                         ...styles.message,
                         backgroundColor: message.type === 'success' ? '#4CAF50' :
-                            message.type === 'warning' ? '#ff9800' : '#f44336'
+                            message.type === 'warning' ? '#ff9800' : '#f44336',
+                        animation: 'fadeIn 0.3s ease-out'
                     }}
                     role="alert"
                     aria-live="assertive"
                 >
+                    <span aria-hidden="true" style={{ marginRight: '15px' }}>
+                        {message.type === 'success' ? '✅' : message.type === 'warning' ? '⚠️' : '❌'}
+                    </span>
                     {message.text}
                 </div>
             )}
@@ -177,13 +198,15 @@ const styles = {
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '100vh',
-        backgroundColor: '#f5f5f5',
         padding: '20px',
+        transition: 'background-color 0.5s ease',
     },
     title: {
         marginBottom: '20px',
         color: '#333',
         fontSize: '2rem',
+        display: 'flex',
+        alignItems: 'center',
     },
     message: {
         padding: '30px',
@@ -193,6 +216,9 @@ const styles = {
         fontSize: '2rem',
         textAlign: 'center',
         fontWeight: 'bold',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     button: {
         marginTop: '30px',
