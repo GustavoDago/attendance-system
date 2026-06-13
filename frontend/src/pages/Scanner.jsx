@@ -135,17 +135,20 @@ const Scanner = () => {
 
     return (
         <div className="kiosk-mode" style={styles.container}>
-            <h1 style={styles.title}>Escaneando para: {type === 'ENTRY' ? 'INGRESO' : 'EGRESO'}</h1>
+            <h1 style={styles.title}>
+                <span aria-hidden="true">{type === 'ENTRY' ? '➡️' : '⬅️'} </span>
+                Escaneando para: {type === 'ENTRY' ? 'INGRESO' : 'EGRESO'}
+            </h1>
 
             <div id="reader" style={{ width: '500px', display: (message || processing) ? 'none' : 'block' }}></div>
 
             {processing && !message && (
                 <div
-                    style={styles.message}
+                    style={{ ...styles.message, animation: 'fadeIn 0.3s ease-out' }}
                     role="alert"
                     aria-live="assertive"
                 >
-                    Procesando...
+                    <span aria-hidden="true">⏳</span> Procesando...
                 </div>
             )}
 
@@ -154,11 +157,15 @@ const Scanner = () => {
                     style={{
                         ...styles.message,
                         backgroundColor: message.type === 'success' ? '#4CAF50' :
-                            message.type === 'warning' ? '#ff9800' : '#f44336'
+                            message.type === 'warning' ? '#ff9800' : '#f44336',
+                        animation: 'fadeIn 0.3s ease-out'
                     }}
                     role="alert"
                     aria-live="assertive"
                 >
+                    <span aria-hidden="true">
+                        {message.type === 'success' ? '✅ ' : message.type === 'warning' ? '⚠️ ' : '❌ '}
+                    </span>
                     {message.text}
                 </div>
             )}
