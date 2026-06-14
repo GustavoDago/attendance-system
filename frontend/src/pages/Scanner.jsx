@@ -134,23 +134,34 @@ const Scanner = () => {
     }, [type, navigate, resetInactivityTimeout]);
 
     return (
-        <div className="kiosk-mode" style={styles.container}>
-            <h1 style={styles.title}>Escaneando para: {type === 'ENTRY' ? 'INGRESO' : 'EGRESO'}</h1>
+        <div className="kiosk-mode" style={{
+            ...styles.container,
+            backgroundColor: type === 'ENTRY' ? '#e8f5e9' : '#ffebee'
+        }}>
+            <h1 className="animate-fade-in" style={styles.title}>
+                <span style={{ marginRight: '10px' }} aria-hidden="true">
+                    {type === 'ENTRY' ? '➡️' : '⬅️'}
+                </span>
+                Escaneando para: {type === 'ENTRY' ? 'INGRESO' : 'EGRESO'}
+            </h1>
 
-            <div id="reader" style={{ width: '500px', display: (message || processing) ? 'none' : 'block' }}></div>
+            <div id="reader" style={{ width: '100%', maxWidth: '500px', display: (message || processing) ? 'none' : 'block' }}></div>
 
             {processing && !message && (
                 <div
+                    className="animate-fade-in"
                     style={styles.message}
                     role="alert"
                     aria-live="assertive"
                 >
+                    <span style={{ marginRight: '10px' }} aria-hidden="true">⏳</span>
                     Procesando...
                 </div>
             )}
 
             {message && (
                 <div
+                    className="animate-fade-in"
                     style={{
                         ...styles.message,
                         backgroundColor: message.type === 'success' ? '#4CAF50' :
@@ -159,6 +170,9 @@ const Scanner = () => {
                     role="alert"
                     aria-live="assertive"
                 >
+                    <span style={{ marginRight: '10px' }} aria-hidden="true">
+                        {message.type === 'success' ? '✅' : message.type === 'warning' ? '⚠️' : '❌'}
+                    </span>
                     {message.text}
                 </div>
             )}
@@ -179,6 +193,7 @@ const styles = {
         minHeight: '100vh',
         backgroundColor: '#f5f5f5',
         padding: '20px',
+        transition: 'background-color 0.5s ease',
     },
     title: {
         marginBottom: '20px',

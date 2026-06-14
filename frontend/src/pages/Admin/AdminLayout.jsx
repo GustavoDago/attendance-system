@@ -66,7 +66,6 @@ const AdminLayout = () => {
                                         justifyContent: isCollapsed ? 'center' : 'flex-start',
                                         padding: isCollapsed ? '12px 0' : '12px 15px',
                                     }}
-                                    aria-label={item.label}
                                 >
                                     <span
                                         style={{...styles.icon, marginRight: isCollapsed ? '0' : '12px'}}
@@ -83,7 +82,6 @@ const AdminLayout = () => {
                 <div style={styles.footer}>
                     <button 
                         onClick={handleLogout} 
-                        aria-label="Cerrar Sesión"
                         style={{
                             ...styles.logoutBtn,
                             justifyContent: isCollapsed ? 'center' : 'flex-start',
@@ -99,7 +97,8 @@ const AdminLayout = () => {
             </div>
             <main
                 key={location.pathname}
-                style={{ ...styles.content, animation: 'fadeIn 0.4s ease-out' }}
+                className="animate-fade-in"
+                style={styles.content}
             >
                 <Outlet />
             </main>
