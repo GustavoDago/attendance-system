@@ -13,3 +13,7 @@
 ## 2026-06-06 - Sidebar Accessibility for Collapsible Navigation
 **Learning:** Collapsible sidebars often fail to provide descriptive labels for navigation items when reduced to icons. Decorative characters (like toggle arrows) and emojis can also create noise for screen readers if not explicitly hidden or labeled.
 **Action:** Always provide `aria-label` for navigation links and buttons that may be reduced to icons. Use `aria-hidden="true"` on decorative elements (emojis, symbols) within interactive components to ensure a clean experience for assistive technologies.
+
+## 2026-06-07 - Robust Animations and Build-driven Fixes
+**Learning:** Inline animations (e.g., `animation: 'fadeIn...'`) can fail silently if keyframes are not globally available or if the syntax is slightly off. Centralizing animations in CSS classes (e.g., `.animate-fade-in`) ensures consistency and maintainability. Also, when fixing build errors like duplicate attributes, it's critical to verify that the remaining attribute still fulfills its accessibility purpose, especially for icon-only elements.
+**Action:** Centralize reusable animations in `index.css` and use class names instead of inline styles. Always double-check accessibility (ARIA labels) after resolving build-time attribute conflicts.
