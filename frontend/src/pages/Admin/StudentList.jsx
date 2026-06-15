@@ -108,6 +108,7 @@ const StudentList = () => {
                     style={styles.filterSelect}
                     value={courseFilter}
                     onChange={(e) => setCourseFilter(e.target.value)}
+                    aria-label="Filtrar por curso"
                 >
                     <option value="">Todos los cursos</option>
                     {courses.map(course => (
