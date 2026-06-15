@@ -137,7 +137,7 @@ const Scanner = () => {
         <div className="kiosk-mode" style={styles.container}>
             <h1 style={styles.title}>Escaneando para: {type === 'ENTRY' ? 'INGRESO' : 'EGRESO'}</h1>
 
-            <div id="reader" style={{ width: '500px', display: (message || processing) ? 'none' : 'block' }}></div>
+            <div id="reader" style={{ width: '100%', maxWidth: '500px', display: (message || processing) ? 'none' : 'block' }}></div>
 
             {processing && !message && (
                 <div
