@@ -85,14 +85,14 @@ const Scanner = () => {
                 const student = response.data.student;
                 const recordType = response.data.type;
 
-                let successMsg = `¡Bienvenido, ${student.firstName} ${student.lastName}!`;
+                let successMsg = `✅ ¡Bienvenido, ${student.firstName} ${student.lastName}!`;
                 let msgType = 'success';
 
                 if (recordType === 'LATE') {
-                    successMsg = `¡Ingreso registrado (TARDE), ${student.firstName}!`;
+                    successMsg = `⚠️ ¡Ingreso registrado (TARDE), ${student.firstName}!`;
                     msgType = 'warning';
                 } else if (recordType === 'EXIT') {
-                    successMsg = `¡Hasta luego, ${student.firstName} ${student.lastName}!`;
+                    successMsg = `✅ ¡Hasta luego, ${student.firstName} ${student.lastName}!`;
                 }
 
                 setMessage({
@@ -101,19 +101,19 @@ const Scanner = () => {
                 });
             } catch (error) {
                 console.error(error);
-                let errorMsg = 'Error al registrar asistencia. Intente nuevamente.';
+                let errorMsg = '❌ Error al registrar asistencia. Intente nuevamente.';
 
                 // Parse Spring Boot error response if available
                 if (error.response && error.response.data) {
-                    if (typeof error.response.data === 'string') errorMsg = error.response.data;
-                    else if (error.response.data.message) errorMsg = error.response.data.message;
+                    if (typeof error.response.data === 'string') errorMsg = `❌ ${error.response.data}`;
+                    else if (error.response.data.message) errorMsg = `❌ ${error.response.data.message}`;
                 }
 
                 // If it's the 1-hour cooldown message from backend
                 if (errorMsg.includes('1 hora') || errorMsg.includes('misma acción')) {
                     setMessage({
                         type: 'warning',
-                        text: '⚠ Ya registró esta acción. Espere al menos 1 hora.'
+                        text: '⚠️ Ya registró esta acción. Espere al menos 1 hora.'
                     });
                 } else {
                     setMessage({
@@ -134,10 +134,22 @@ const Scanner = () => {
     }, [type, navigate, resetInactivityTimeout]);
 
     return (
-        <div className="kiosk-mode" style={styles.container}>
-            <h1 style={styles.title}>Escaneando para: {type === 'ENTRY' ? 'INGRESO' : 'EGRESO'}</h1>
+        <div className="kiosk-mode" style={{
+            ...styles.container,
+            backgroundColor: type === 'ENTRY' ? '#e8f5e9' : '#ffebee'
+        }}>
+            <h1 style={styles.title}>
+                Escaneando para: {type === 'ENTRY' ? '➡️ INGRESO' : '⬅️ EGRESO'}
+            </h1>
 
-            <div id="reader" style={{ width: '500px', display: (message || processing) ? 'none' : 'block' }}></div>
+            <div
+                id="reader"
+                style={{
+                    width: '100%',
+                    maxWidth: '500px',
+                    display: (message || processing) ? 'none' : 'block'
+                }}
+            ></div>
 
             {processing && !message && (
                 <div
@@ -145,7 +157,7 @@ const Scanner = () => {
                     role="alert"
                     aria-live="assertive"
                 >
-                    Procesando...
+                    ⏳ Procesando...
                 </div>
             )}
 
