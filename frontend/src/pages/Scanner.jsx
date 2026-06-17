@@ -145,6 +145,7 @@ const Scanner = () => {
                     role="alert"
                     aria-live="assertive"
                 >
+                    <span style={{ marginRight: '10px' }} aria-hidden="true">⏳</span>
                     Procesando...
                 </div>
             )}
@@ -154,11 +155,16 @@ const Scanner = () => {
                     style={{
                         ...styles.message,
                         backgroundColor: message.type === 'success' ? '#4CAF50' :
-                            message.type === 'warning' ? '#ff9800' : '#f44336'
+                            message.type === 'warning' ? '#ff9800' : '#f44336',
+                        animation: 'fadeIn 0.4s ease-out'
                     }}
                     role="alert"
                     aria-live="assertive"
                 >
+                    <span style={{ marginRight: '10px' }} aria-hidden="true">
+                        {message.type === 'success' ? '✅' :
+                         message.type === 'warning' ? '⚠️' : '❌'}
+                    </span>
                     {message.text}
                 </div>
             )}
