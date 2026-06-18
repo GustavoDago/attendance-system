@@ -17,6 +17,15 @@ const Scanner = () => {
         navigate('/');
     }, [navigate]);
 
+    const getStatusIcon = (msgType) => {
+        switch (msgType) {
+            case 'success': return '✅ ';
+            case 'warning': return '⚠️ ';
+            case 'error': return '❌ ';
+            default: return '';
+        }
+    };
+
     const resetInactivityTimeout = useCallback(() => {
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
@@ -134,10 +143,21 @@ const Scanner = () => {
     }, [type, navigate, resetInactivityTimeout]);
 
     return (
-        <div className="kiosk-mode" style={styles.container}>
-            <h1 style={styles.title}>Escaneando para: {type === 'ENTRY' ? 'INGRESO' : 'EGRESO'}</h1>
+        <div
+            className="kiosk-mode"
+            style={{
+                ...styles.container,
+                backgroundColor: type === 'ENTRY' ? '#e8f5e9' : '#ffebee'
+            }}
+        >
+            <h1 style={styles.title}>
+                <span aria-hidden="true" style={{ marginRight: '10px' }}>
+                    {type === 'ENTRY' ? '➡️' : '⬅️'}
+                </span>
+                Escaneando para: {type === 'ENTRY' ? 'INGRESO' : 'EGRESO'}
+            </h1>
 
-            <div id="reader" style={{ width: '500px', display: (message || processing) ? 'none' : 'block' }}></div>
+            <div id="reader" style={{ width: '100%', maxWidth: '500px', display: (message || processing) ? 'none' : 'block' }}></div>
 
             {processing && !message && (
                 <div
@@ -145,6 +165,7 @@ const Scanner = () => {
                     role="alert"
                     aria-live="assertive"
                 >
+                    <span aria-hidden="true" style={{ marginRight: '10px' }}>⏳</span>
                     Procesando...
                 </div>
             )}
@@ -159,11 +180,16 @@ const Scanner = () => {
                     role="alert"
                     aria-live="assertive"
                 >
+                    <span aria-hidden="true">{getStatusIcon(message.type)}</span>
                     {message.text}
                 </div>
             )}
 
-            <button style={styles.button} onClick={returnHome}>
+            <button
+                style={styles.button}
+                onClick={returnHome}
+                aria-label="Cancelar - Volver al inicio"
+            >
                 Cancelar
             </button>
         </div>
@@ -179,6 +205,7 @@ const styles = {
         minHeight: '100vh',
         backgroundColor: '#f5f5f5',
         padding: '20px',
+        transition: 'background-color 0.4s ease',
     },
     title: {
         marginBottom: '20px',

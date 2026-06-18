@@ -13,3 +13,7 @@
 ## 2026-06-06 - Sidebar Accessibility for Collapsible Navigation
 **Learning:** Collapsible sidebars often fail to provide descriptive labels for navigation items when reduced to icons. Decorative characters (like toggle arrows) and emojis can also create noise for screen readers if not explicitly hidden or labeled.
 **Action:** Always provide `aria-label` for navigation links and buttons that may be reduced to icons. Use `aria-hidden="true"` on decorative elements (emojis, symbols) within interactive components to ensure a clean experience for assistive technologies.
+
+## 2025-05-18 - Visual Context and Build Constraints in Kiosk Mode
+**Learning:** In kiosk applications with dual modes (e.g., Entry/Exit), immediate visual feedback through background colors and directional icons significantly reduces user error. Additionally, Vite/ESBuild are strict about duplicate JSX attributes (like `aria-label`), which can break production builds even if development servers run without issues.
+**Action:** Use dynamic background colors (e.g., light green/red) and directional icons to distinguish operational modes. Always verify production builds (`pnpm build`) to catch duplicate attribute errors that might be missed during development.
