@@ -68,14 +68,18 @@ const KioskHome = () => {
             <button
               style={{ ...currentStyles.actionButton, backgroundColor: '#4CAF50' }}
               onClick={() => navigate('/scan/ENTRY')}
+              aria-label="INGRESAR - Registrar ingreso"
             >
+              <span style={{ marginRight: '15px' }} aria-hidden="true">➡️</span>
               INGRESAR
             </button>
 
             <button
               style={{ ...currentStyles.actionButton, backgroundColor: '#f44336' }}
               onClick={() => navigate('/scan/EXIT')}
+              aria-label="EGRESAR - Registrar egreso"
             >
+              <span style={{ marginRight: '15px' }} aria-hidden="true">⬅️</span>
               EGRESAR
             </button>
           </div>
