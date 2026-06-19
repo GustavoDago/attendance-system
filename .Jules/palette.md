@@ -13,3 +13,7 @@
 ## 2026-06-06 - Sidebar Accessibility for Collapsible Navigation
 **Learning:** Collapsible sidebars often fail to provide descriptive labels for navigation items when reduced to icons. Decorative characters (like toggle arrows) and emojis can also create noise for screen readers if not explicitly hidden or labeled.
 **Action:** Always provide `aria-label` for navigation links and buttons that may be reduced to icons. Use `aria-hidden="true"` on decorative elements (emojis, symbols) within interactive components to ensure a clean experience for assistive technologies.
+
+## 2026-06-07 - Production Build Failure due to Duplicate Props
+**Learning:** React/Vite production builds can fail if duplicate JSX attributes (like `aria-label`) are present, even if they aren't caught during development. This often happens during refactoring or when merging multiple accessibility improvements.
+**Action:** Always verify accessibility improvements with a production build (`pnpm build`) to ensure no duplicate attributes were accidentally introduced, and consolidate redundant props while maintaining necessary ARIA labels.
