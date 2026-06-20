@@ -134,10 +134,20 @@ const Scanner = () => {
     }, [type, navigate, resetInactivityTimeout]);
 
     return (
-        <div className="kiosk-mode" style={styles.container}>
-            <h1 style={styles.title}>Escaneando para: {type === 'ENTRY' ? 'INGRESO' : 'EGRESO'}</h1>
+        <div
+            className="kiosk-mode"
+            style={{
+                ...styles.container,
+                backgroundColor: type === 'ENTRY' ? '#e8f5e9' : '#ffebee',
+                transition: 'background-color 0.4s ease'
+            }}
+        >
+            <h1 style={styles.title}>
+                <span aria-hidden="true">{type === 'ENTRY' ? '➡️ ' : '⬅️ '}</span>
+                {type === 'ENTRY' ? 'INGRESO' : 'EGRESO'}
+            </h1>
 
-            <div id="reader" style={{ width: '500px', display: (message || processing) ? 'none' : 'block' }}></div>
+            <div id="reader" style={{ width: '100%', maxWidth: '500px', display: (message || processing) ? 'none' : 'block' }}></div>
 
             {processing && !message && (
                 <div
@@ -145,7 +155,7 @@ const Scanner = () => {
                     role="alert"
                     aria-live="assertive"
                 >
-                    Procesando...
+                    <span aria-hidden="true">⏳</span> Procesando...
                 </div>
             )}
 
@@ -154,11 +164,15 @@ const Scanner = () => {
                     style={{
                         ...styles.message,
                         backgroundColor: message.type === 'success' ? '#4CAF50' :
-                            message.type === 'warning' ? '#ff9800' : '#f44336'
+                            message.type === 'warning' ? '#ff9800' : '#f44336',
+                        animation: 'fadeIn 0.4s ease-out'
                     }}
                     role="alert"
                     aria-live="assertive"
                 >
+                    <span aria-hidden="true" style={{ marginRight: '10px' }}>
+                        {message.type === 'success' ? '✅' : message.type === 'warning' ? '⚠️' : '❌'}
+                    </span>
                     {message.text}
                 </div>
             )}
