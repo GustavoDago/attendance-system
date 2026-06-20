@@ -13,3 +13,11 @@
 ## 2026-06-06 - Sidebar Accessibility for Collapsible Navigation
 **Learning:** Collapsible sidebars often fail to provide descriptive labels for navigation items when reduced to icons. Decorative characters (like toggle arrows) and emojis can also create noise for screen readers if not explicitly hidden or labeled.
 **Action:** Always provide `aria-label` for navigation links and buttons that may be reduced to icons. Use `aria-hidden="true"` on decorative elements (emojis, symbols) within interactive components to ensure a clean experience for assistive technologies.
+
+## 2025-06-07 - Build Failures from Duplicate JSX Attributes
+**Learning:** Duplicate JSX attributes (like `aria-label`) are caught as errors during the production build (`pnpm build`) by Vite/esbuild, even if the development server handles them without warning. This can lead to unexpected deployment blockers.
+**Action:** Always verify accessibility improvements with a production build (`pnpm build`) to ensure no duplicate attributes were accidentally introduced. When fixing these, ensure the final interactive element remains properly labeled for screen readers.
+
+## 2025-06-08 - Scanner Visual Context and Responsiveness
+**Learning:** Kiosk users benefit significantly from immediate visual context (color changes) when switching between Entry and Exit modes. Hardcoded widths on camera containers can also break layouts on various tablet/mobile devices used as kiosks.
+**Action:** Use dynamic background colors (e.g., light green for ingress, light red for egress) and directional icons to provide multi-modal feedback. Always use responsive width units (e.g., `width: '100%', maxWidth: '500px'`) for scanner containers.
