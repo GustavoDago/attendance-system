@@ -135,9 +135,11 @@ const Scanner = () => {
 
     return (
         <div className="kiosk-mode" style={styles.container}>
-            <h1 style={styles.title}>Escaneando para: {type === 'ENTRY' ? 'INGRESO' : 'EGRESO'}</h1>
+            <h1 style={styles.title}>
+                {type === 'ENTRY' ? '➡️ INGRESO' : '⬅️ EGRESO'}
+            </h1>
 
-            <div id="reader" style={{ width: '500px', display: (message || processing) ? 'none' : 'block' }}></div>
+            <div id="reader" style={{ width: '100%', maxWidth: '500px', display: (message || processing) ? 'none' : 'block' }}></div>
 
             {processing && !message && (
                 <div
@@ -145,6 +147,7 @@ const Scanner = () => {
                     role="alert"
                     aria-live="assertive"
                 >
+                    <span style={{ marginRight: '10px' }} aria-hidden="true">⏳</span>
                     Procesando...
                 </div>
             )}
@@ -159,6 +162,9 @@ const Scanner = () => {
                     role="alert"
                     aria-live="assertive"
                 >
+                    <span style={{ marginRight: '10px' }} aria-hidden="true">
+                        {message.type === 'success' ? '✅' : message.type === 'warning' ? '⚠️' : '❌'}
+                    </span>
                     {message.text}
                 </div>
             )}
