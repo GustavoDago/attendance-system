@@ -109,6 +109,7 @@ const UserList = () => {
                                             onClick={() => handleDelete(user.id)}
                                             style={styles.deleteButton}
                                             title="Eliminar Usuario"
+                                            aria-label="Eliminar Usuario"
                                         >
                                             🗑️
                                         </button>
