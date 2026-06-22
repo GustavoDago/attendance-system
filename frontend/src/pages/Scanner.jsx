@@ -141,11 +141,11 @@ const Scanner = () => {
 
             {processing && !message && (
                 <div
-                    style={styles.message}
+                    style={{ ...styles.message, animation: 'fadeIn 0.4s ease-out' }}
                     role="alert"
                     aria-live="assertive"
                 >
-                    Procesando...
+                    <span style={styles.icon}>⏳</span> Procesando...
                 </div>
             )}
 
@@ -154,11 +154,15 @@ const Scanner = () => {
                     style={{
                         ...styles.message,
                         backgroundColor: message.type === 'success' ? '#4CAF50' :
-                            message.type === 'warning' ? '#ff9800' : '#f44336'
+                            message.type === 'warning' ? '#ff9800' : '#f44336',
+                        animation: 'fadeIn 0.4s ease-out'
                     }}
                     role="alert"
                     aria-live="assertive"
                 >
+                    <span style={styles.icon}>
+                        {message.type === 'success' ? '✅' : message.type === 'warning' ? '⚠️' : '❌'}
+                    </span>
                     {message.text}
                 </div>
             )}
@@ -193,6 +197,13 @@ const styles = {
         fontSize: '2rem',
         textAlign: 'center',
         fontWeight: 'bold',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '15px',
+    },
+    icon: {
+        fontSize: '2.5rem',
     },
     button: {
         marginTop: '30px',
