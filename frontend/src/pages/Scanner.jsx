@@ -134,8 +134,14 @@ const Scanner = () => {
     }, [type, navigate, resetInactivityTimeout]);
 
     return (
-        <div className="kiosk-mode" style={styles.container}>
-            <h1 style={styles.title}>Escaneando para: {type === 'ENTRY' ? 'INGRESO' : 'EGRESO'}</h1>
+        <div className="kiosk-mode" style={{
+            ...styles.container,
+            backgroundColor: type === 'ENTRY' ? '#e8f5e9' : '#ffebee'
+        }}>
+            <h1 style={styles.title}>
+                {type === 'ENTRY' ? '➡️ ' : '⬅️ '}
+                Escaneando para: {type === 'ENTRY' ? 'INGRESO' : 'EGRESO'}
+            </h1>
 
             <div id="reader" style={{ width: '500px', display: (message || processing) ? 'none' : 'block' }}></div>
 
@@ -145,6 +151,7 @@ const Scanner = () => {
                     role="alert"
                     aria-live="assertive"
                 >
+                    <span style={{ marginRight: '10px' }} aria-hidden="true">⏳</span>
                     Procesando...
                 </div>
             )}
@@ -159,6 +166,9 @@ const Scanner = () => {
                     role="alert"
                     aria-live="assertive"
                 >
+                    <span style={{ marginRight: '10px' }} aria-hidden="true">
+                        {message.type === 'success' ? '✅' : message.type === 'warning' ? '⚠️' : '❌'}
+                    </span>
                     {message.text}
                 </div>
             )}
@@ -177,8 +187,8 @@ const styles = {
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '100vh',
-        backgroundColor: '#f5f5f5',
         padding: '20px',
+        transition: 'background-color 0.4s ease',
     },
     title: {
         marginBottom: '20px',
