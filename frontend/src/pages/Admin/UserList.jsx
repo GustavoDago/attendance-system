@@ -5,6 +5,8 @@ import { toast } from 'react-toastify';
 
 const UserList = () => {
     const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [deletingId, setDeletingId] = useState(null);
     const navigate = useNavigate();
 
     const fetchUsers = React.useCallback(async () => {
@@ -13,6 +15,7 @@ const UserList = () => {
             return response.data;
         } catch (error) {
             console.error('Error fetching users:', error);
+            toast.error('Error al cargar usuarios');
             return null;
         }
     }, []);
@@ -20,9 +23,11 @@ const UserList = () => {
     useEffect(() => {
         let isMounted = true;
         const loadData = async () => {
+            setLoading(true);
             const data = await fetchUsers();
-            if (isMounted && data) {
-                setUsers(data);
+            if (isMounted) {
+                if (data) setUsers(data);
+                setLoading(false);
             }
         };
         loadData();
@@ -33,6 +38,7 @@ const UserList = () => {
 
     const handleDelete = async (id) => {
         if (window.confirm('¿Está seguro de que desea eliminar este usuario?')) {
+            setDeletingId(id);
             try {
                 await axios.delete(`/api/users/${id}`);
                 setUsers(prev => prev.filter(user => user.id !== id));
@@ -40,6 +46,8 @@ const UserList = () => {
             } catch (error) {
                 console.error('Error deleting user:', error);
                 toast.error('No se pudo eliminar el usuario.');
+            } finally {
+                setDeletingId(null);
             }
         }
     };
@@ -60,8 +68,12 @@ const UserList = () => {
                     <h1 style={styles.title}>Gestión de Usuarios</h1>
                     <p style={styles.subtitle}>{users.length} usuarios registrados en el sistema</p>
                 </div>
-                <button style={styles.addButton} onClick={() => navigate('/admin/users/add')}>
-                    <span style={{ marginRight: '8px' }}>👤+</span> Agregar Usuario
+                <button
+                    style={styles.addButton}
+                    onClick={() => navigate('/admin/users/add')}
+                    aria-label="Agregar nuevo usuario"
+                >
+                    <span style={{ marginRight: '8px' }} aria-hidden="true">👤+</span> Agregar Usuario
                 </button>
             </div>
             
@@ -78,44 +90,62 @@ const UserList = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {users.map(user => (
-                            <tr key={user.id} style={styles.tr}>
-                                <td style={styles.td}>{user.id}</td>
-                                <td style={styles.td}>
-                                    <div style={styles.nameContainer}>
-                                        <div style={styles.avatar}>
-                                            {(user.firstName?.[0] || '?')}{(user.lastName?.[0] || '?')}
+                        {loading ? (
+                            <tr><td colSpan="6" style={styles.tdCenter}>Cargando...</td></tr>
+                        ) : users.length === 0 ? (
+                            <tr><td colSpan="6" style={styles.tdCenter}>No se encontraron usuarios</td></tr>
+                        ) : (
+                            users.map(user => (
+                                <tr key={user.id} style={styles.tr}>
+                                    <td style={styles.td}>{user.id}</td>
+                                    <td style={styles.td}>
+                                        <div style={styles.nameContainer}>
+                                            <div style={styles.avatar}>
+                                                {(user.firstName?.[0] || '?')}{(user.lastName?.[0] || '?')}
+                                            </div>
+                                            <div>
+                                                <div style={styles.fullName}>{user.firstName} {user.lastName}</div>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <div style={styles.fullName}>{user.firstName} {user.lastName}</div>
+                                    </td>
+                                    <td style={styles.td}>{user.dni}</td>
+                                    <td style={styles.td}>
+                                        <code style={styles.username}>{user.username || user.dni}</code>
+                                    </td>
+                                    <td style={styles.td}>
+                                        <span style={{ ...styles.badge, ...getRoleBadgeStyle(user.role) }}>
+                                            {user.role}
+                                        </span>
+                                    </td>
+                                    <td style={{ ...styles.td, textAlign: 'center' }}>
+                                        <div style={styles.actions}>
+                                            <Link
+                                                to={`/admin/qr/${user.id}`}
+                                                target="_blank"
+                                                style={styles.qrButton}
+                                                title="Imprimir QR"
+                                                aria-label={`Imprimir QR de ${user.firstName} ${user.lastName}`}
+                                            >
+                                                <span aria-hidden="true">🖨️</span> QR
+                                            </Link>
+                                            <button
+                                                onClick={() => handleDelete(user.id)}
+                                                style={{
+                                                    ...styles.deleteButton,
+                                                    opacity: deletingId === user.id ? 0.5 : 1,
+                                                    cursor: deletingId === user.id ? 'not-allowed' : 'pointer'
+                                                }}
+                                                title="Eliminar Usuario"
+                                                aria-label={`Eliminar usuario ${user.firstName} ${user.lastName}`}
+                                                disabled={deletingId === user.id}
+                                            >
+                                                <span aria-hidden="true">{deletingId === user.id ? '⏳' : '🗑️'}</span>
+                                            </button>
                                         </div>
-                                    </div>
-                                </td>
-                                <td style={styles.td}>{user.dni}</td>
-                                <td style={styles.td}>
-                                    <code style={styles.username}>{user.username || user.dni}</code>
-                                </td>
-                                <td style={styles.td}>
-                                    <span style={{ ...styles.badge, ...getRoleBadgeStyle(user.role) }}>
-                                        {user.role}
-                                    </span>
-                                </td>
-                                <td style={{ ...styles.td, textAlign: 'center' }}>
-                                    <div style={styles.actions}>
-                                        <Link to={`/admin/qr/${user.id}`} target="_blank" style={styles.qrButton} title="Imprimir QR">
-                                            🖨️ QR
-                                        </Link>
-                                        <button 
-                                            onClick={() => handleDelete(user.id)}
-                                            style={styles.deleteButton}
-                                            title="Eliminar Usuario"
-                                        >
-                                            🗑️
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>
@@ -191,6 +221,12 @@ const styles = {
         verticalAlign: 'middle',
         color: '#3f4254',
         fontSize: '0.95rem',
+    },
+    tdCenter: {
+        padding: '40px',
+        textAlign: 'center',
+        color: '#a2a3b7',
+        fontSize: '1.1rem',
     },
     nameContainer: {
         display: 'flex',
