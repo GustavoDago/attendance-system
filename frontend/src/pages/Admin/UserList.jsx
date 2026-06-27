@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 
 const UserList = () => {
     const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
     const fetchUsers = React.useCallback(async () => {
@@ -13,6 +14,7 @@ const UserList = () => {
             return response.data;
         } catch (error) {
             console.error('Error fetching users:', error);
+            toast.error('Error al cargar usuarios');
             return null;
         }
     }, []);
@@ -20,9 +22,11 @@ const UserList = () => {
     useEffect(() => {
         let isMounted = true;
         const loadData = async () => {
+            setLoading(true);
             const data = await fetchUsers();
-            if (isMounted && data) {
-                setUsers(data);
+            if (isMounted) {
+                if (data) setUsers(data);
+                setLoading(false);
             }
         };
         loadData();
@@ -31,8 +35,8 @@ const UserList = () => {
         };
     }, [fetchUsers]);
 
-    const handleDelete = async (id) => {
-        if (window.confirm('¿Está seguro de que desea eliminar este usuario?')) {
+    const handleDelete = async (id, name) => {
+        if (window.confirm(`¿Está seguro de que desea eliminar al usuario ${name}?`)) {
             try {
                 await axios.delete(`/api/users/${id}`);
                 setUsers(prev => prev.filter(user => user.id !== id));
@@ -78,8 +82,13 @@ const UserList = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {users.map(user => (
-                            <tr key={user.id} style={styles.tr}>
+                        {loading ? (
+                            <tr><td colSpan="6" style={styles.tdCenter}>Cargando...</td></tr>
+                        ) : users.length === 0 ? (
+                            <tr><td colSpan="6" style={styles.tdCenter}>No se encontraron usuarios</td></tr>
+                        ) : (
+                            users.map(user => (
+                                <tr key={user.id} style={styles.tr}>
                                 <td style={styles.td}>{user.id}</td>
                                 <td style={styles.td}>
                                     <div style={styles.nameContainer}>
@@ -102,20 +111,28 @@ const UserList = () => {
                                 </td>
                                 <td style={{ ...styles.td, textAlign: 'center' }}>
                                     <div style={styles.actions}>
-                                        <Link to={`/admin/qr/${user.id}`} target="_blank" style={styles.qrButton} title="Imprimir QR">
-                                            🖨️ QR
+                                        <Link
+                                            to={`/admin/qr/${user.id}`}
+                                            target="_blank"
+                                            style={styles.qrButton}
+                                            title="Imprimir QR"
+                                            aria-label={`Imprimir QR de ${user.firstName} ${user.lastName}`}
+                                        >
+                                            <span aria-hidden="true">🖨️</span> QR
                                         </Link>
                                         <button 
-                                            onClick={() => handleDelete(user.id)}
+                                            onClick={() => handleDelete(user.id, `${user.firstName} ${user.lastName}`)}
                                             style={styles.deleteButton}
                                             title="Eliminar Usuario"
+                                            aria-label={`Eliminar usuario ${user.firstName} ${user.lastName}`}
                                         >
-                                            🗑️
+                                            <span aria-hidden="true">🗑️</span>
                                         </button>
                                     </div>
                                 </td>
                             </tr>
-                        ))}
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>
@@ -191,6 +208,12 @@ const styles = {
         verticalAlign: 'middle',
         color: '#3f4254',
         fontSize: '0.95rem',
+    },
+    tdCenter: {
+        padding: '40px',
+        textAlign: 'center',
+        color: '#a2a3b7',
+        fontSize: '1.1rem',
     },
     nameContainer: {
         display: 'flex',
