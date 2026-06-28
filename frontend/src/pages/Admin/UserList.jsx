@@ -5,15 +5,21 @@ import { toast } from 'react-toastify';
 
 const UserList = () => {
     const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [deletingId, setDeletingId] = useState(null);
     const navigate = useNavigate();
 
     const fetchUsers = React.useCallback(async () => {
+        setLoading(true);
         try {
             const response = await axios.get('/api/users');
             return response.data;
         } catch (error) {
             console.error('Error fetching users:', error);
+            toast.error('Error al cargar usuarios');
             return null;
+        } finally {
+            setLoading(false);
         }
     }, []);
 
@@ -31,8 +37,9 @@ const UserList = () => {
         };
     }, [fetchUsers]);
 
-    const handleDelete = async (id) => {
-        if (window.confirm('¿Está seguro de que desea eliminar este usuario?')) {
+    const handleDelete = async (id, name) => {
+        if (window.confirm(`¿Está seguro de que desea eliminar al usuario ${name}?`)) {
+            setDeletingId(id);
             try {
                 await axios.delete(`/api/users/${id}`);
                 setUsers(prev => prev.filter(user => user.id !== id));
@@ -40,6 +47,8 @@ const UserList = () => {
             } catch (error) {
                 console.error('Error deleting user:', error);
                 toast.error('No se pudo eliminar el usuario.');
+            } finally {
+                setDeletingId(null);
             }
         }
     };
@@ -78,44 +87,66 @@ const UserList = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {users.map(user => (
-                            <tr key={user.id} style={styles.tr}>
-                                <td style={styles.td}>{user.id}</td>
-                                <td style={styles.td}>
-                                    <div style={styles.nameContainer}>
-                                        <div style={styles.avatar}>
-                                            {(user.firstName?.[0] || '?')}{(user.lastName?.[0] || '?')}
-                                        </div>
-                                        <div>
-                                            <div style={styles.fullName}>{user.firstName} {user.lastName}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td style={styles.td}>{user.dni}</td>
-                                <td style={styles.td}>
-                                    <code style={styles.username}>{user.username || user.dni}</code>
-                                </td>
-                                <td style={styles.td}>
-                                    <span style={{ ...styles.badge, ...getRoleBadgeStyle(user.role) }}>
-                                        {user.role}
-                                    </span>
-                                </td>
-                                <td style={{ ...styles.td, textAlign: 'center' }}>
-                                    <div style={styles.actions}>
-                                        <Link to={`/admin/qr/${user.id}`} target="_blank" style={styles.qrButton} title="Imprimir QR">
-                                            🖨️ QR
-                                        </Link>
-                                        <button 
-                                            onClick={() => handleDelete(user.id)}
-                                            style={styles.deleteButton}
-                                            title="Eliminar Usuario"
-                                        >
-                                            🗑️
-                                        </button>
-                                    </div>
-                                </td>
+                        {loading ? (
+                            <tr>
+                                <td colSpan="6" style={styles.tdCenter}>Cargando usuarios...</td>
                             </tr>
-                        ))}
+                        ) : users.length === 0 ? (
+                            <tr>
+                                <td colSpan="6" style={styles.tdCenter}>No se encontraron usuarios</td>
+                            </tr>
+                        ) : (
+                            users.map(user => (
+                                <tr key={user.id} style={styles.tr}>
+                                    <td style={styles.td}>{user.id}</td>
+                                    <td style={styles.td}>
+                                        <div style={styles.nameContainer}>
+                                            <div style={styles.avatar}>
+                                                {(user.firstName?.[0] || '?')}{(user.lastName?.[0] || '?')}
+                                            </div>
+                                            <div>
+                                                <div style={styles.fullName}>{user.firstName} {user.lastName}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style={styles.td}>{user.dni}</td>
+                                    <td style={styles.td}>
+                                        <code style={styles.username}>{user.username || user.dni}</code>
+                                    </td>
+                                    <td style={styles.td}>
+                                        <span style={{ ...styles.badge, ...getRoleBadgeStyle(user.role) }}>
+                                            {user.role}
+                                        </span>
+                                    </td>
+                                    <td style={{ ...styles.td, textAlign: 'center' }}>
+                                        <div style={styles.actions}>
+                                            <Link
+                                                to={`/admin/qr/${user.id}`}
+                                                target="_blank"
+                                                style={styles.qrButton}
+                                                title="Imprimir QR"
+                                                aria-label={`Imprimir QR de ${user.firstName} ${user.lastName}`}
+                                            >
+                                                🖨️ QR
+                                            </Link>
+                                            <button
+                                                onClick={() => handleDelete(user.id, `${user.firstName} ${user.lastName}`)}
+                                                style={{
+                                                    ...styles.deleteButton,
+                                                    opacity: deletingId === user.id ? 0.7 : 1,
+                                                    cursor: deletingId === user.id ? 'not-allowed' : 'pointer'
+                                                }}
+                                                disabled={deletingId === user.id}
+                                                title="Eliminar Usuario"
+                                                aria-label={`Eliminar usuario ${user.firstName} ${user.lastName}`}
+                                            >
+                                                {deletingId === user.id ? '⌛' : '🗑️'}
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>
@@ -191,6 +222,12 @@ const styles = {
         verticalAlign: 'middle',
         color: '#3f4254',
         fontSize: '0.95rem',
+    },
+    tdCenter: {
+        padding: '40px',
+        textAlign: 'center',
+        color: '#a2a3b7',
+        fontSize: '1.1rem',
     },
     nameContainer: {
         display: 'flex',
