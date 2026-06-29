@@ -1,30 +1,44 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const HolidayConfigPage = () => {
     const [holidays, setHolidays] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [adding, setAdding] = useState(false);
+    const [deletingId, setDeletingId] = useState(null);
     
     // Form state
     const [newDate, setNewDate] = useState('');
     const [newReason, setNewReason] = useState('');
 
-    useEffect(() => {
-        fetchHolidays();
-    }, []);
-
-    const fetchHolidays = async () => {
+    const fetchHolidays = useCallback(async () => {
         setLoading(true);
         try {
             const res = await axios.get('/api/holidays');
-            setHolidays(res.data);
-        } catch (error) {
+            return res.data;
+        } catch (err) {
+            console.error(err);
             toast.error('Error al cargar feriados');
+            return null;
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        let isMounted = true;
+        const loadData = async () => {
+            const data = await fetchHolidays();
+            if (isMounted && data) {
+                setHolidays(data);
+            }
+        };
+        loadData();
+        return () => {
+            isMounted = false;
+        };
+    }, [fetchHolidays]);
 
     const handleAddHoliday = async (e) => {
         e.preventDefault();
@@ -33,26 +47,36 @@ const HolidayConfigPage = () => {
             return;
         }
 
+        setAdding(true);
         try {
             await axios.post('/api/holidays', { date: newDate, reason: newReason });
             toast.success('Feriado agregado con éxito');
             setNewDate('');
             setNewReason('');
-            fetchHolidays();
-        } catch (error) {
-            const errMsg = error.response?.data?.message || 'Error al agregar feriado';
+            const data = await fetchHolidays();
+            if (data) setHolidays(data);
+        } catch (err) {
+            console.error(err);
+            const errMsg = err.response?.data?.message || 'Error al agregar feriado';
             toast.error(errMsg);
+        } finally {
+            setAdding(false);
         }
     };
 
-    const handleDeleteHoliday = async (id) => {
-        if (!window.confirm('¿Eliminar este feriado?')) return;
+    const handleDeleteHoliday = async (holiday) => {
+        if (!window.confirm(`¿Está seguro de que desea eliminar el feriado "${holiday.reason}"?`)) return;
+
+        setDeletingId(holiday.id);
         try {
-            await axios.delete(`/api/holidays/${id}`);
+            await axios.delete(`/api/holidays/${holiday.id}`);
+            setHolidays(prev => prev.filter(h => h.id !== holiday.id));
             toast.success('Feriado eliminado');
-            fetchHolidays();
-        } catch (error) {
+        } catch (err) {
+            console.error(err);
             toast.error('Error al eliminar feriado');
+        } finally {
+            setDeletingId(null);
         }
     };
 
@@ -67,68 +91,90 @@ const HolidayConfigPage = () => {
                 <h2>Agregar Nuevo Feriado</h2>
                 <form onSubmit={handleAddHoliday} style={styles.form}>
                     <div style={styles.field}>
-                        <label>Fecha:</label>
+                        <label htmlFor="newDate">Fecha:</label>
                         <input 
+                            id="newDate"
                             type="date" 
                             value={newDate} 
                             onChange={(e) => setNewDate(e.target.value)} 
                             style={styles.input}
+                            required
                         />
                     </div>
                     <div style={styles.field}>
-                        <label>Motivo:</label>
+                        <label htmlFor="newReason">Motivo:</label>
                         <input 
+                            id="newReason"
                             type="text" 
                             value={newReason} 
                             onChange={(e) => setNewReason(e.target.value)} 
                             style={styles.input}
                             placeholder="Ej. Día del Estudiante"
+                            required
                         />
                     </div>
-                    <button type="submit" style={styles.button}>Registrar</button>
+                    <button
+                        type="submit"
+                        style={{
+                            ...styles.button,
+                            backgroundColor: adding ? '#a7f3d0' : '#10b981',
+                            cursor: adding ? 'not-allowed' : 'pointer'
+                        }}
+                        disabled={adding}
+                    >
+                        {adding ? 'Registrando...' : 'Registrar'}
+                    </button>
                 </form>
             </div>
 
             <div style={styles.card}>
                 <h2>Listado de Feriados</h2>
-                {loading ? <p>Cargando...</p> : (
-                    <table style={styles.table}>
-                        <thead>
+                <table style={styles.table}>
+                    <thead>
+                        <tr>
+                            <th style={styles.th}>Fecha</th>
+                            <th style={styles.th}>Motivo</th>
+                            <th style={{ ...styles.th, textAlign: 'center' }}>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {loading ? (
                             <tr>
-                                <th style={styles.th}>Fecha</th>
-                                <th style={styles.th}>Motivo</th>
-                                <th style={styles.th}>Acción</th>
+                                <td colSpan="3" style={styles.emptyText}>Cargando...</td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            {holidays.length === 0 ? (
-                                <tr>
-                                    <td colSpan="3" style={styles.emptyText}>No hay feriados registrados.</td>
+                        ) : holidays.length === 0 ? (
+                            <tr>
+                                <td colSpan="3" style={styles.emptyText}>No hay feriados registrados.</td>
+                            </tr>
+                        ) : (
+                            [...holidays]
+                                .sort((a, b) => new Date(a.date) - new Date(b.date))
+                                .map(h => (
+                                <tr key={h.id} style={styles.tr}>
+                                    <td style={styles.td}>
+                                        {new Date(h.date + 'T00:00:00').toLocaleDateString('es-AR')}
+                                    </td>
+                                    <td style={styles.td}>{h.reason}</td>
+                                    <td style={{ ...styles.td, textAlign: 'center' }}>
+                                        <button
+                                            onClick={() => handleDeleteHoliday(h)}
+                                            style={{
+                                                ...styles.deleteBtn,
+                                                opacity: deletingId === h.id ? 0.6 : 1,
+                                                cursor: deletingId === h.id ? 'not-allowed' : 'pointer'
+                                            }}
+                                            disabled={deletingId === h.id}
+                                            title={`Eliminar feriado ${h.reason}`}
+                                            aria-label={`Eliminar feriado ${h.reason}`}
+                                        >
+                                            {deletingId === h.id ? '⏳' : 'Eliminar'}
+                                        </button>
+                                    </td>
                                 </tr>
-                            ) : (
-                                [...holidays]
-                                    .sort((a, b) => new Date(a.date) - new Date(b.date))
-                                    .map(h => (
-                                    <tr key={h.id} style={styles.tr}>
-                                        <td style={styles.td}>
-                                            {new Date(h.date + 'T00:00:00').toLocaleDateString('es-AR')}
-                                        </td>
-                                        <td style={styles.td}>{h.reason}</td>
-                                        <td style={styles.td}>
-                                            <button 
-                                                onClick={() => handleDeleteHoliday(h.id)} 
-                                                style={styles.deleteBtn}
-                                                title="Eliminar"
-                                            >
-                                                Eliminar
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                )}
+                            ))
+                        )}
+                    </tbody>
+                </table>
             </div>
         </div>
     );
