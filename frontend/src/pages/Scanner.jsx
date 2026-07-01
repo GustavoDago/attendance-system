@@ -133,18 +133,27 @@ const Scanner = () => {
 
     }, [type, navigate, resetInactivityTimeout]);
 
-    return (
-        <div className="kiosk-mode" style={styles.container}>
-            <h1 style={styles.title}>Escaneando para: {type === 'ENTRY' ? 'INGRESO' : 'EGRESO'}</h1>
+    const containerStyle = {
+        ...styles.container,
+        backgroundColor: type === 'ENTRY' ? '#e8f5e9' : (type === 'EXIT' ? '#ffebee' : '#f5f5f5'),
+        transition: 'background-color 0.4s ease'
+    };
 
-            <div id="reader" style={{ width: '500px', display: (message || processing) ? 'none' : 'block' }}></div>
+    return (
+        <div className="kiosk-mode" style={containerStyle}>
+            <h1 style={styles.title}>
+                {type === 'ENTRY' ? '➡️ INGRESO' : '⬅️ EGRESO'}
+            </h1>
+
+            <div id="reader" style={{ width: '100%', maxWidth: '500px', display: (message || processing) ? 'none' : 'block' }}></div>
 
             {processing && !message && (
                 <div
-                    style={styles.message}
+                    style={{ ...styles.message, backgroundColor: '#666', animation: 'fadeIn 0.4s ease-out' }}
                     role="alert"
                     aria-live="assertive"
                 >
+                    <span style={{ marginRight: '10px' }} aria-hidden="true">⌛</span>
                     Procesando...
                 </div>
             )}
@@ -153,12 +162,16 @@ const Scanner = () => {
                 <div
                     style={{
                         ...styles.message,
-                        backgroundColor: message.type === 'success' ? '#4CAF50' :
-                            message.type === 'warning' ? '#ff9800' : '#f44336'
+                        backgroundColor: message.type === 'success' ? '#2e7d32' :
+                            message.type === 'warning' ? '#ef6c00' : '#c62828',
+                        animation: 'fadeIn 0.4s ease-out'
                     }}
                     role="alert"
                     aria-live="assertive"
                 >
+                    <span style={{ marginRight: '10px' }} aria-hidden="true">
+                        {message.type === 'success' ? '✅' : message.type === 'warning' ? '⚠️' : '❌'}
+                    </span>
                     {message.text}
                 </div>
             )}
