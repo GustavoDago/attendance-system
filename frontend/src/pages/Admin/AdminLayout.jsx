@@ -59,14 +59,14 @@ const AdminLayout = () => {
                             <li key={item.path} style={styles.navItem}>
                                 <Link 
                                     to={item.path} 
-                                    aria-label={item.label}
                                     style={{
                                         ...styles.link,
                                         backgroundColor: isActive ? 'rgba(255,255,255,0.1)' : 'transparent',
                                         justifyContent: isCollapsed ? 'center' : 'flex-start',
                                         padding: isCollapsed ? '12px 0' : '12px 15px',
                                     }}
-                                    aria-label={item.label}
+                                    aria-label={isCollapsed ? item.label : undefined}
+                                    title={isCollapsed ? item.label : undefined}
                                 >
                                     <span
                                         style={{...styles.icon, marginRight: isCollapsed ? '0' : '12px'}}
@@ -83,14 +83,13 @@ const AdminLayout = () => {
                 <div style={styles.footer}>
                     <button 
                         onClick={handleLogout} 
-                        aria-label="Cerrar Sesión"
                         style={{
                             ...styles.logoutBtn,
                             justifyContent: isCollapsed ? 'center' : 'flex-start',
                             padding: isCollapsed ? '12px 0' : '12px 15px',
                         }}
+                        aria-label={isCollapsed ? "Cerrar Sesión" : undefined}
                         title="Cerrar Sesión"
-                        aria-label="Cerrar Sesión"
                     >
                         <span style={{...styles.icon, marginRight: isCollapsed ? '0' : '12px'}} aria-hidden="true">🚪</span>
                         {!isCollapsed && <span style={styles.label}>Cerrar Sesión</span>}
